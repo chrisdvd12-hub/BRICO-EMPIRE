@@ -20,6 +20,12 @@ Un déploiement ne doit être annoncé comme réussi qu’après retour READY de
 
 ## État du déploiement de cette livraison
 
-Le compte Vercel est connecté, mais les appels de liste des projets et de création du projet lié à GitHub ont renvoyé **403 — accès à l’espace de projets non autorisé**, y compris après une nouvelle autorisation déclarée par le propriétaire. Aucun projet ni déploiement Vercel n’a été créé par ces tentatives.
+Publication en production confirmée par Vercel (READY), vérifiée le 21 octobre 2026 : **https://brico-empire.vercel.app**.
 
-Le dépôt est néanmoins prêt : depuis https://vercel.com/new, importer `chrisdvd12-hub/BRICO-EMPIRE`, vérifier **Other**, racine du dépôt et sortie **web**, puis **Deploy**. La configuration versionnée évite une compilation Godot dans Vercel. Une fois un déploiement prêt confirmé, enregistrer son URL ici ; ne pas déduire une URL à partir du nom du projet.
+- Projet : `prj_JrKLmaMxBd1evW0nbyAsTh9Mdigl`.
+- Déploiement importé depuis GitHub : `dpl_GvD6LYdN7wbv4kQvkNnp7CDc4zVC`.
+- Commit du jeu publié : `17c0af01c7447b30189ac9adf12450fcea7ae0bf` sur `main`.
+- Page et pack accessibles publiquement en HTTP 200, sans connexion Vercel.
+- Pack : 128 032 octets ; SHA-256 `2b5414867a492b9505b299b44e6e2de1391a58261f86c3b5953907e113d5c104`, identique au pack testé.
+
+Les anciens refus de connexion sont résolus pour la publication. Le helper de consultation protégée renvoie encore 403 ; la vérification HTTP publique indépendante fonctionne. Aucun nouveau test sur iPad réel n’est revendiqué. Les sauvegardes du lien Sites doivent être transférées par code comme expliqué ci-dessus.
