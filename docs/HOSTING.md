@@ -27,4 +27,4 @@ Tests avant publication : 6 196 assertions sans échec ; UI sans échec ; Chromi
 
 Les helpers Sites n’étaient pas installés dans cet environnement. Le dépôt d’hébergement existant a été ouvert et actualisé par Git, avec les credentials éphémères transmis par stdin et conservés en mémoire uniquement. L’archive statique a été construite depuis le commit poussé exact, puis publiée par l’outil natif Sites. Aucun jeton n’est versionné.
 
-Les sauvegardes restent propres à cette origine. Le futur passage à Vercel nécessite un transfert par le code disponible dans Options si le joueur veut conserver sa partie. Le dépôt est préparé pour Vercel ; à cette livraison, l’API Vercel refusait encore l’accès à l’espace de projets (403), donc aucun déploiement Vercel n’est annoncé.
+La version Vercel est désormais publiée : https://brico-empire.vercel.app (production READY, accès HTTP public et hash du pack vérifiés le 21 octobre 2026). Voir [VERCEL.md](VERCEL.md). Les sauvegardes restent propres à chaque origine : utiliser Options → Copier ma sauvegarde sur Sites, puis charger ce code sur Vercel pour conserver la partie.
