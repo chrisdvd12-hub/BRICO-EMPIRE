@@ -86,6 +86,9 @@ func run():
 	var credited: int = game.sim.money
 	game._notification(Node.NOTIFICATION_APPLICATION_RESUMED)
 	expect(game.sim.money == credited,"duplicate resume cannot credit again")
+	root.size = Vector2i(360,640)
+	await capture("05-petit-ecran")
+	expect(ui.root.size.x >= 360,"UI remains sized on small screen")
 	print("UI RESULT: ",failures," failures")
 	game.save_store.reset()
 	game.queue_free(); await process_frame

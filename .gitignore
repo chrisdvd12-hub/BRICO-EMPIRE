@@ -8,3 +8,8 @@ build/*
 *.ipa
 *.pck
 .DS_Store
+
+# Engine WASM is shipped gzip-compressed; generated raw copy is reproducible.
+web/game.wasm
+!web/game.pck
+!dist/brico-empire.pck

@@ -10,6 +10,7 @@ var suspended := false
 var speed := 1.0
 var developer := false
 var offline_notice := ""
+var sale_save_pending := false
 func _ready():
 	developer = "--dev" in OS.get_cmdline_user_args()
 	if "--smoke" in OS.get_cmdline_user_args(): save_store = BricoSaveStore.new("user://smoke_save.json")
@@ -28,6 +29,7 @@ func start_game():
 	ui.reset_requested.connect(reset_game)
 	ui.speed_changed.connect(func(value): speed = value)
 	sim.purchased.connect(func(_a,_b): save_game())
+	sim.sale.connect(func(_amount,_position): sale_save_pending = true)
 	if not offline_notice.is_empty(): ui.show_toast(offline_notice); offline_notice = ""
 	elif not save_store.warning.is_empty(): ui.show_toast(save_store.warning)
 	save_game()
@@ -60,7 +62,9 @@ func _process(dt: float):
 	var steps := 0
 	while accumulator >= STEP and steps < 80:
 		sim.tick(STEP); accumulator -= STEP; steps += 1
-	if sim.tutorial != old_tutorial: save_game()
+	if sim.tutorial != old_tutorial or sale_save_pending:
+		sale_save_pending = false
+		save_game()
 	save_timer += minf(dt,.15)
 	if save_timer >= sim.cfg.v("autosave_seconds"):
 		save_timer = 0; save_game()

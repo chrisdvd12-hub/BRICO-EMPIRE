@@ -142,11 +142,11 @@ func open_sheet(kind: String, id: String):
 				purchase_row("unlock",id,"Ouvrir ce rayon",func(): return "%d pièces par vente · capacité %d" % [sim.sale_value(id),sim.capacity(id)])
 			else:
 				live(func(): return "En rayon : %d/%d · Réserve : %d/%d" % [sim.inventory.shelves[id],sim.capacity(id),sim.inventory.reserve[id],sim.reserve_capacity()])
-				purchase_row("shelf_capacity",id,"Capacité",func(): return "Niv. %d/5 · %d → %d unités" % [sim.levels[id].capacity,sim.capacity(id),sim.capacity(id)+sim.cfg.v("capacity_step")])
+				purchase_row("shelf_capacity",id,"Capacité",func(): return "Niv. %d/5 · %d à %d unités" % [sim.levels[id].capacity,sim.capacity(id),sim.capacity(id)+sim.cfg.v("capacity_step")])
 				purchase_row("shelf_value",id,"Valeur des produits",func():
 					var next_value := int(round(sim.cfg.family(id).price*(1.0+sim.levels[id].value*sim.cfg.v("value_step"))))
-					return "Niv. %d/5 · %d → %d pièces / vente" % [sim.levels[id].value,sim.sale_value(id),next_value])
-				purchase_row("shelf_service",id,"Prise du produit",func(): return "Niv. %d/5 · %.1f → %.1f s" % [sim.levels[id].service,sim.pick_time(id),sim.pick_time(id)*sim.cfg.v("speed_factor")])
+					return "Niv. %d/5 · %d à %d pièces / vente" % [sim.levels[id].value,sim.sale_value(id),next_value])
+				purchase_row("shelf_service",id,"Prise du produit",func(): return "Niv. %d/5 · %.1f à %.1f s" % [sim.levels[id].service,sim.pick_time(id),sim.pick_time(id)*sim.cfg.v("speed_factor")])
 		"workers":
 			live(func():
 				var states := ""
@@ -154,15 +154,15 @@ func open_sheet(kind: String, id: String):
 				for w in sim.workers: states += "Employé %d : %s%s\n" % [w.id+1,names[w.state]," · attend la livraison" if w.waiting_goods else ""]
 				return states.strip_edges())
 			purchase_row("hire","","Recruter",func(): return "%d/%d employés · poste autonome" % [sim.workers.size(),sim.cfg.v("max_workers")])
-			purchase_row("worker_speed","","Déplacement de l’équipe",func(): return "Niv. %d/5 · %.0f → %.0f unités/s" % [sim.worker_levels.speed,sim.worker_speed(),sim.worker_speed()+sim.cfg.v("worker_speed")*sim.cfg.v("worker_speed_step")])
-			purchase_row("worker_carry","","Lot transporté",func(): return "Niv. %d/5 · %d → %d unités" % [sim.worker_levels.carry,sim.carry_capacity(),sim.carry_capacity()+sim.cfg.v("carry_step")])
-			purchase_row("worker_restock","","Vitesse de réassort",func(): return "Niv. %d/5 · %.1f → %.1f s" % [sim.worker_levels.restock,sim.restock_time(),sim.restock_time()*sim.cfg.v("speed_factor")])
+			purchase_row("worker_speed","","Déplacement de l’équipe",func(): return "Niv. %d/5 · %.0f à %.0f unités/s" % [sim.worker_levels.speed,sim.worker_speed(),sim.worker_speed()+sim.cfg.v("worker_speed")*sim.cfg.v("worker_speed_step")])
+			purchase_row("worker_carry","","Lot transporté",func(): return "Niv. %d/5 · %d à %d unités" % [sim.worker_levels.carry,sim.carry_capacity(),sim.carry_capacity()+sim.cfg.v("carry_step")])
+			purchase_row("worker_restock","","Vitesse de réassort",func(): return "Niv. %d/5 · %.1f à %.1f s" % [sim.worker_levels.restock,sim.restock_time(),sim.restock_time()*sim.cfg.v("speed_factor")])
 		"checkout":
 			if int(id) >= sim.checkouts:
 				purchase_row("checkout","","Ouvrir la seconde caisse",func(): return "Caissier inclus · %.1f s / client" % sim.checkout_time(1))
 			else:
 				live(func(): return "%d client(s) dans la file · encaissement automatique" % sim.queues[int(id)].size())
-				purchase_row("cash_speed",id,"Encaissement",func(): return "Niv. %d/5 · %.1f → %.1f s / client" % [sim.cash_levels[int(id)],sim.checkout_time(int(id)),sim.checkout_time(int(id))*sim.cfg.v("speed_factor")])
+				purchase_row("cash_speed",id,"Encaissement",func(): return "Niv. %d/5 · %.1f à %.1f s / client" % [sim.cash_levels[int(id)],sim.checkout_time(int(id)),sim.checkout_time(int(id))*sim.cfg.v("speed_factor")])
 		"reserve":
 			content.add_child(label("Chaque famille possède sa propre capacité. Les marchandises sont gratuites ; seuls les achats encaissés rapportent de l’argent."))
 			live(func():
@@ -174,7 +174,7 @@ func open_sheet(kind: String, id: String):
 		"build", "expand":
 			for f in sim.cfg.families:
 				if not sim.opened[f.id]: purchase_row("unlock",f.id,"Ouvrir : " + f.name,func(): return "Vente : %d pièces · %d unités en rayon" % [sim.sale_value(f.id),sim.capacity(f.id)])
-			purchase_row("expand","","Agrandissement %d/2" % mini(2,sim.expansion+1),func(): return "Nouvelle aile : surface jardinage + réception" if sim.expansion == 0 else "Grand dépôt : réserve 24 → 48 ; rayons +4 unités")
+			purchase_row("expand","","Agrandissement %d/2" % mini(2,sim.expansion+1),func(): return "Nouvelle aile : surface jardinage + réception" if sim.expansion == 0 else "Grand dépôt : réserve 24 à 48 ; rayons +4 unités")
 			if sim.checkouts < 2: purchase_row("checkout","","Deuxième caisse",func(): return "Caissier inclus · une file supplémentaire")
 		"settings":
 			var sound := CheckButton.new(); sound.text = "Sons"; sound.button_pressed = sim.settings.sound; sound.custom_minimum_size.y = 72; content.add_child(sound)
@@ -233,7 +233,7 @@ func refresh():
 	for row in rows:
 		var why: String = sim.progression.reason(row.action,row.target)
 		var maxed := why in ["Niveau maximal","Équipe au complet","Magasin entièrement agrandi","Les deux caisses sont ouvertes"]
-		row.detail.text = str(row.effect.call()).split(" → ")[0] + " · au maximum" if maxed else row.effect.call()
+		row.detail.text = str(row.effect.call()).split(" à ")[0] + " · au maximum" if maxed else row.effect.call()
 		row.button.text = "Niveau maximal" if maxed else "Acheter · %d pièces" % sim.progression.cost(row.action,row.target)
 		row.button.disabled = not why.is_empty()
 		row.reason.text = why

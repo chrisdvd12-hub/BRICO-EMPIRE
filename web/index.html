@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#174956">
+<title>Brico Empire · jeu de gestion</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#102b34;color:#fff4df;font:16px system-ui,sans-serif}body{display:grid;place-items:center;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);overflow:hidden}.game{height:100%;height:100dvh;width:min(100vw,56.25dvh);max-height:100%;position:relative;box-shadow:0 0 100px #071b24}iframe{border:0;width:100%;height:100%;display:block;background:#174956}.notice{position:absolute;inset:0;display:grid;place-content:center;text-align:center;padding:24px;background:#174956;pointer-events:none}.notice[hidden]{display:none}.notice h1{font-size:30px;margin:0 0 12px}.notice p{line-height:1.5;max-width:25em}.notice a{pointer-events:auto;color:#ffd28d}@media(prefers-reduced-motion:no-preference){.notice h1{animation:pulse 1.4s ease-in-out infinite}@keyframes pulse{50%{opacity:.65}}}
+</style>
+</head>
+<body>
+<main class="game" aria-label="Jeu Brico Empire en orientation portrait">
+<div class="notice" id="notice"><h1>BRICO EMPIRE</h1><p>Ouverture de votre magasin…<br>Premier chargement : environ 10 Mo.</p><noscript>Activez JavaScript pour lancer le jeu.</noscript></div>
+<iframe id="game" src="game.html" title="Brico Empire, magasin animé" allow="autoplay; fullscreen; gamepad"></iframe>
+</main>
+<script>
+const frame=document.getElementById('game');
+frame.addEventListener('load',()=>{document.getElementById('notice').hidden=true;frame.focus()});
+</script>
+</body>
+</html>
