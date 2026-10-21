@@ -16,3 +16,10 @@ Le runtime `game.wasm.gz` doit être envoyé comme un fichier gzip ordinaire, sa
 Les fichiers sont revalidés à chaque chargement pour éviter de mélanger un nouveau pack de jeu avec un ancien lanceur. La sauvegarde IndexedDB reste propre à chaque domaine. Le passage depuis le lien ChatGPT vers un nouveau lien Vercel ne transfère donc pas automatiquement la partie : utiliser **Options → Copier ma sauvegarde**, puis charger ce code sur le nouveau site. Ne pas effacer l’ancienne sauvegarde avant d’avoir vérifié le transfert.
 
 Un déploiement ne doit être annoncé comme réussi qu’après retour READY de Vercel et vérification des fichiers du jeu. Aucun abonnement, domaine ou service payant n’est nécessaire pour cette préparation.
+
+
+## État du déploiement de cette livraison
+
+Le compte Vercel est connecté, mais les appels de liste des projets et de création du projet lié à GitHub ont renvoyé **403 — accès à l’espace de projets non autorisé**, y compris après une nouvelle autorisation déclarée par le propriétaire. Aucun projet ni déploiement Vercel n’a été créé par ces tentatives.
+
+Le dépôt est néanmoins prêt : depuis https://vercel.com/new, importer `chrisdvd12-hub/BRICO-EMPIRE`, vérifier **Other**, racine du dépôt et sortie **web**, puis **Deploy**. La configuration versionnée évite une compilation Godot dans Vercel. Une fois un déploiement prêt confirmé, enregistrer son URL ici ; ne pas déduire une URL à partir du nom du projet.
