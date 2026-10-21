@@ -6,9 +6,9 @@ Première version jouable d’un jeu de gestion mobile en français. Les clients
 
 ## Jouer directement sur Safari
 
-**[Ouvrir Brico Empire](https://brico-empire-jeu.vividmug7.chatgpt.site)**
+**[Ouvrir Brico Empire sur Vercel](https://brico-empire.vercel.app)**
 
-Hébergement HTTPS actif. Le site est privé : se connecter avec le compte ChatGPT propriétaire si demandé. Premier chargement : environ 10 Mo. Safari 16.4+ avec WebGL 2 est requis ; l’export a été testé sous Chromium, pas encore sur un iPad réel. La sauvegarde reste dans les données du navigateur.
+Hébergement HTTPS actif sur Vercel, accès public vérifié. L’ancien [lien Sites](https://brico-empire-jeu.vividmug7.chatgpt.site) reste disponible avec le compte ChatGPT propriétaire. Pour conserver une partie commencée sur ce lien, utiliser Options → Copier ma sauvegarde, puis charger ce code sur Vercel. Premier chargement : environ 10 Mo. Safari 16.4+ avec WebGL 2 est requis ; l’export a été testé sous Chromium, pas encore sur un iPad réel. La sauvegarde reste dans les données du navigateur.
 
 ## Jouer dans un navigateur (export fourni)
 
@@ -112,7 +112,7 @@ Le contenu utilise des identifiants stables (`atelier_01`, `tools`, `paint`, `ga
 
 ## Hébergement et vérifications
 
-Le lien Safari indiqué plus haut utilise Sites. Le dépôt est également préparé pour **Vercel** : [instructions et transfert de sauvegarde](docs/VERCEL.md). Les fichiers Godot sont déjà exportés dans `web/` ; aucun build Godot n’est nécessaire sur Vercel.
+Le lien Safari indiqué plus haut utilise **Vercel**, publication en production confirmée et fichiers vérifiés : [instructions et transfert de sauvegarde](docs/VERCEL.md). Les fichiers Godot sont déjà exportés dans `web/` ; aucun build Godot n’est nécessaire sur Vercel.
 
 Les suites de tests sont exécutables avec les commandes ci-dessous. Les workflows GitHub Actions mentionnés dans une version antérieure du README n’étaient pas présents dans la branche reçue : aucun résultat de CI GitHub n’est revendiqué.
 
