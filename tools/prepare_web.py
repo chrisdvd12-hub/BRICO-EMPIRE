@@ -29,7 +29,9 @@ loader = '''<script>
 '''
 html = web / 'game.html'
 text = html.read_text()
+text = text.replace('<html lang="en">','<html lang="fr">')
+text = text.replace('\tdisplay: block;\n', '\tdisplay: block; touch-action: none; -webkit-user-select: none; user-select: none;\n')
 if '// Official Godot WASM' not in text:
     text = text.replace('<script src="game.js"></script>', loader + '<script src="game.js"></script>')
-    html.write_text(text)
+html.write_text(text)
 print('Runtime compressé :', (web / 'game.wasm.gz').stat().st_size, 'octets')

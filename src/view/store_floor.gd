@@ -20,8 +20,8 @@ func _draw():
 	if sim == null: return
 	floor_rect(Rect2(-30,-30,660,1000),Color("a39d88"))
 	var top := 300 if sim.expansion == 0 else (140 if sim.expansion == 1 else 0)
-	var light := Color("f4e9d1")
-	var dark := Color("ebdec2")
+	var light := Color("f7efde")
+	var dark := Color("eee6d3")
 	var scuffs := PackedVector2Array()
 	for ty in range(top,900,60):
 		for tx in range(0,600,60):
@@ -37,7 +37,9 @@ func _draw():
 	var grout := PackedVector2Array()
 	for y in range(top,901,60): grout.append(p(Vector2(0,y))); grout.append(p(Vector2(600,y)))
 	for x in range(0,601,60): grout.append(p(Vector2(x,top))); grout.append(p(Vector2(x,900)))
-	draw_multiline(grout,Color("d9cdb0"),2)
+	draw_multiline(grout,Color("e3d9c4"),1)
+	# Continuous central aisle guides the eye from the entrance to the departments.
+	floor_rect(Rect2(305,top+20,42,860-top),Color("e3eddf"))
 	# Soft contact shadow at the foot of the back and left walls.
 	shade([Vector2(12,top+12),Vector2(600,top+12),Vector2(600,top+46),Vector2(12,top+46)],Color(0.1,0.15,0.15,.16),Color(0.1,0.15,0.15,0))
 	shade([Vector2(12,top+12),Vector2(12,900),Vector2(44,900),Vector2(44,top+12)],Color(0.1,0.15,0.15,.14),Color(0.1,0.15,0.15,0))

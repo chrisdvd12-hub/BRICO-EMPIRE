@@ -12,6 +12,7 @@ var title_label: Label
 var objective: Label
 var status: Label
 var advice: Label
+var goal_bar: ProgressBar
 var tutorial_label: Label
 var tutorial_box: PanelContainer
 var sheet: PanelContainer
@@ -28,8 +29,8 @@ var dev := false
 const TEAL := Color("174956")
 const PAPER := Color("fff5e2")
 const MUTED := Color("526b68")
-# Call-to-action palette: [fill, text]. Each role gets its own colour.
-const KINDS := {"buy":["2f9e6a","ffffff"],"build":["2f9e6a","ffffff"],"team":["e8893a","ffffff"],"trophy":["f2c14e","4a3306"],"options":["5b6f7a","ffffff"],"camera":["2f7fd0","ffffff"],"close":["d9634c","ffffff"],"skip":["ffffff","174956"],"danger":["c2492f","ffffff"],"default":["174956","fff5e2"],"maxed":["f2c14e","4a3306"],"stats":["8c6bc4","ffffff"],"gold":["e0a526","3b2a05"]}
+# Shared navigation palette; purchase and warning states retain semantic colours.
+const KINDS := {"nav":["174956","fff5e2"],"buy":["2f9e6a","ffffff"],"build":["2f9e6a","ffffff"],"team":["e8893a","ffffff"],"trophy":["f2c14e","4a3306"],"options":["5b6f7a","ffffff"],"camera":["2f7fd0","ffffff"],"close":["d9634c","ffffff"],"skip":["ffffff","174956"],"danger":["c2492f","ffffff"],"default":["174956","fff5e2"],"maxed":["f2c14e","4a3306"],"stats":["8c6bc4","ffffff"],"gold":["e0a526","3b2a05"]}
 var styles := {}
 var bold: FontVariation
 var build_button: Button
@@ -38,6 +39,9 @@ var pulse := 0.0
 var toasts: Array = []
 var confirm_franchise := false
 var confirm_import := false
+var header_panel: PanelContainer
+var bottom_panel: PanelContainer
+var nav_buttons := {}
 func setup(simulation: BricoSimulation, store_view: BricoStoreView, developer: bool):
 	sim = simulation
 	view = store_view
@@ -48,6 +52,7 @@ func setup(simulation: BricoSimulation, store_view: BricoStoreView, developer: b
 	add_child(root)
 	var theme := Theme.new()
 	theme.default_font_size = 24
+	theme.default_font = preload("res://assets/fonts/Fredoka-Regular.ttf")
 	theme.set_color("font_color","Label",TEAL)
 	theme.set_color("font_color","Button",PAPER)
 	theme.set_color("font_disabled_color","Button",Color("e1e2d7"))
@@ -59,46 +64,58 @@ func setup(simulation: BricoSimulation, store_view: BricoStoreView, developer: b
 		style.content_margin_top = 8; style.content_margin_bottom = 8
 		theme.set_stylebox(state,"Button",style)
 	root.theme = theme
-	bold = FontVariation.new(); bold.base_font = ThemeDB.fallback_font; bold.variation_embolden = 0.6
+	bold = FontVariation.new(); bold.base_font = preload("res://assets/fonts/Fredoka-Semibold.ttf")
 	var header := panel_at(Vector2(12,12),Vector2(516,184),PAPER)
+	header_panel = header
 	var top := VBoxContainer.new(); top.add_theme_constant_override("separation",3); header.add_child(top)
 	title_label = label("BRICO EMPIRE     /     ATELIER 01",16); top.add_child(title_label)
 	var money_row := HBoxContainer.new(); top.add_child(money_row)
 	money_row.add_theme_constant_override("separation",8)
-	money_label = label("",31); money_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; money_row.add_child(money_label)
-	money_row.add_child(button("Stats",func(): open_sheet("stats",""),"stats"))
-	var center := button("Recentrer",view.recenter,"camera"); money_row.add_child(center)
+	money_label = label("",29); money_label.autowrap_mode = TextServer.AUTOWRAP_OFF; money_label.clip_text = true; money_label.custom_minimum_size.x = 180; money_label.add_theme_font_override("font",bold); money_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; money_row.add_child(money_label)
+	money_row.add_child(icon_button("stats","Statistiques",func(): open_sheet("stats","")))
+	var center := icon_button("center","Recentrer",view.recenter); money_row.add_child(center)
+	var settings := icon_button("settings","Paramètres",func(): open_sheet("settings",""))
+	settings.add_theme_constant_override("icon_max_width",30)
+	nav_buttons["settings"] = settings
+	money_row.add_child(settings)
 	objective = label("",21); top.add_child(objective)
 	status = label("",18); top.add_child(status)
 	# Header lines never wrap: a long objective must not push the status out of the panel.
 	for l in [title_label,objective,status]:
 		l.autowrap_mode = TextServer.AUTOWRAP_OFF; l.clip_text = true; l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	var bottom := panel_at(Vector2(12,782),Vector2(516,166),PAPER)
+	bottom_panel = bottom
 	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	bottom.offset_left = 12; bottom.offset_right = -12; bottom.offset_top = -178; bottom.offset_bottom = -12
 	var bottom_box := VBoxContainer.new(); bottom_box.add_theme_constant_override("separation",8); bottom.add_child(bottom_box)
-	advice = label("",22); bottom_box.add_child(advice)
+	advice = label("",20); advice.max_lines_visible = 2; advice.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS; bottom_box.add_child(advice)
+	goal_bar = ProgressBar.new(); goal_bar.custom_minimum_size.y = 6; goal_bar.show_percentage = false; goal_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var track := StyleBoxFlat.new(); track.bg_color = Color("d8e4d6"); track.set_corner_radius_all(3)
+	var fill := StyleBoxFlat.new(); fill.bg_color = Color("438e80"); fill.set_corner_radius_all(3)
+	goal_bar.add_theme_stylebox_override("background",track); goal_bar.add_theme_stylebox_override("fill",fill)
+	bottom_box.add_child(goal_bar)
 	var menu := HBoxContainer.new(); menu.add_theme_constant_override("separation",8); bottom_box.add_child(menu)
-	for item in [["Équipe","workers","team"],["Construire","build","build"],["Succès","achievements","trophy"],["Options","settings","options"]]:
-		# Four entries share the bar: smaller text and compact margins keep them on one row.
-		var b := button(item[0],func(): open_sheet(item[1],""),item[2],true); b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		b.add_theme_font_size_override("font_size",20)
-		if item[1] == "build": build_button = b
+	for item in [["Équipe","workers"],["Construire","build"],["Succès","achievements"]]:
+		var b := icon_button(item[1],item[0],func(): open_sheet(item[1],""))
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		nav_buttons[item[1]] = b
+		if item[1] == "build":
+			build_button = b
+			b.draw.connect(draw_build_badge)
 		menu.add_child(b)
-	tutorial_box = panel_at(Vector2(12,640),Vector2(516,125),Color("e3eed5"))
-	tutorial_box.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	tutorial_box.offset_left = 12; tutorial_box.offset_right = -12; tutorial_box.offset_top = -318; tutorial_box.offset_bottom = -190
+	tutorial_box = panel_at(Vector2(12,208),Vector2(516,100),Color("e3eed5"))
 	var tuto := HBoxContainer.new(); tutorial_box.add_child(tuto)
-	tutorial_label = label("",22); tutorial_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; tuto.add_child(tutorial_label)
-	var skip := button("Passer",func(): sim.tutorial = 5; save_requested.emit(),"skip"); skip.custom_minimum_size.x = 98; tuto.add_child(skip)
+	tutorial_label = label("",20); tutorial_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; tuto.add_child(tutorial_label)
+	var skip := button("Passer",func(): sim.tutorial = 5; save_requested.emit(),"skip"); skip.custom_minimum_size.x = 120; tuto.add_child(skip)
 	toast_label = label("",18)
-	toast_label.position = Vector2(24,205); toast_label.size = Vector2(492,0)
+	toast_label.position = Vector2(24,316); toast_label.size = Vector2(492,0)
 	toast_label.add_theme_color_override("font_color",PAPER)
 	var toast_style := StyleBoxFlat.new(); toast_style.bg_color = Color(0.06,.2,.24,.88); toast_style.set_corner_radius_all(12)
 	toast_style.content_margin_left = 12; toast_style.content_margin_right = 12; toast_style.content_margin_top = 8; toast_style.content_margin_bottom = 8
 	toast_label.add_theme_stylebox_override("normal",toast_style)
 	toast_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(toast_label)
+	view.ui_blocks_point = blocks_store_point
 	view.selected.connect(open_sheet)
 	sim.achieved.connect(func(a):
 		show_toast("Succès débloqué : %s · +%d pièces" % [a.name,a.reward])
@@ -119,13 +136,31 @@ func apply_safe_area():
 		var ratio := root.size.y/window_size.y
 		root.offset_top = maxf(0,safe.position.y*ratio)
 		root.offset_bottom = -maxf(0,(window_size.y-safe.end.y)*ratio)
+func draw_build_badge():
+	if build_ready: build_button.draw_circle(Vector2(build_button.size.x-14,14),5,Color("a9d6c4"))
+func blocks_store_point(at: Vector2) -> bool:
+	if is_instance_valid(sheet): return true
+	for panel in [header_panel,bottom_panel,tutorial_box]:
+		if is_instance_valid(panel) and panel.visible and panel.get_global_rect().has_point(at): return true
+	return false
+func icon_button(id: String, title: String, callback: Callable) -> Button:
+	var b := button("",callback,"nav",true)
+	b.name = "Nav_"+id
+	b.icon = load("res://assets/ui/%s.svg" % id)
+	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	b.expand_icon = true
+	b.add_theme_constant_override("icon_max_width",40)
+	b.custom_minimum_size = Vector2(72,72)
+	b.tooltip_text = title
+	b.accessibility_name = title
+	return b
 func label(text: String, size := 19) -> Label:
 	var l := Label.new(); l.text = text; l.add_theme_font_size_override("font_size",size)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
 func button(text: String, callback: Callable, kind := "default", compact := false) -> Button:
-	var b := Button.new(); b.text = text; b.custom_minimum_size.y = 72
+	var b := Button.new(); b.text = text; b.clip_text = true; b.custom_minimum_size = Vector2(120 if not text.is_empty() else 72,72)
 	b.pressed.connect(callback)
 	style_button(b,kind,compact)
 	return b
@@ -148,7 +183,7 @@ func cta_style(kind: String, state: String, compact: bool) -> StyleBox:
 		if state == "hover": s.bg_color = Color("eef6f4")
 	# Raised key: thick darker bottom edge that sinks when pressed (total height unchanged).
 	var pressed := state == "pressed"
-	s.border_width_bottom = 2 if pressed else 6
+	s.border_width_bottom = 2 if pressed else (3 if kind == "nav" else 5)
 	s.content_margin_left = 4 if compact else 14; s.content_margin_right = s.content_margin_left
 	s.content_margin_top = 12 if pressed else 8; s.content_margin_bottom = 6
 	if state != "disabled" and not pressed:
@@ -166,7 +201,8 @@ func style_button(b: Button, kind: String, compact := false):
 	b.add_theme_font_override("font",bold)
 func panel_at(at: Vector2, dimensions: Vector2, color: Color) -> PanelContainer:
 	var panel := PanelContainer.new(); panel.position = at; panel.size = dimensions
-	var style := StyleBoxFlat.new(); style.bg_color = color; style.set_corner_radius_all(18)
+	var style := StyleBoxFlat.new(); style.bg_color = color; style.set_corner_radius_all(20)
+	style.shadow_color = Color(0.04,.16,.18,.13); style.shadow_size = 8; style.shadow_offset = Vector2(0,3)
 	style.content_margin_left = 16; style.content_margin_right = 16; style.content_margin_top = 12; style.content_margin_bottom = 12
 	panel.add_theme_stylebox_override("panel",style)
 	root.add_child(panel)
@@ -208,7 +244,7 @@ func open_sheet(kind: String, id: String):
 	var column := VBoxContainer.new(); column.add_theme_constant_override("separation",12); body.add_child(column)
 	var heading := HBoxContainer.new(); column.add_child(heading)
 	var titles := {"shelf":sim.cfg.family(id).get("name","Rayon"),"workers":"Équipe de réassort","checkout":"Caisse %d" % (int(id)+1),"reserve":"Réserve & livraisons","expand":"Agrandir le magasin","build":"Construire & grandir","achievements":"Succès","settings":"Réglages","stats":"Statistiques"}
-	var title := label(titles.get(kind,"Brico Empire"),25); title.size_flags_horizontal = Control.SIZE_EXPAND_FILL; heading.add_child(title)
+	var title := label(titles.get(kind,"Brico Empire"),25); title.autowrap_mode = TextServer.AUTOWRAP_OFF; title.clip_text = true; title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS; title.size_flags_horizontal = Control.SIZE_EXPAND_FILL; heading.add_child(title)
 	heading.add_child(button("Fermer",close_sheet,"close"))
 	var scroll := ScrollContainer.new(); scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL; scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED; column.add_child(scroll)
 	content = VBoxContainer.new(); content.size_flags_horizontal = Control.SIZE_EXPAND_FILL; content.add_theme_constant_override("separation",12); scroll.add_child(content)
@@ -359,7 +395,7 @@ func stats_sheet():
 				var clipped := PackedVector2Array()
 				for q in pts: clipped.append(Vector2(minf(q.x,c.x-18+36*part),q.y))
 				stars.draw_colored_polygon(clipped,Color("f2c14e"))
-		stars.draw_string(ThemeDB.fallback_font,Vector2(240,32),"%.1f / 5" % r,HORIZONTAL_ALIGNMENT_LEFT,-1,26,TEAL))
+		stars.draw_string(bold,Vector2(240,32),"%.1f / 5" % r,HORIZONTAL_ALIGNMENT_LEFT,-1,26,TEAL))
 	live(func(): return "Satisfaction des clients %.1f · décoration +%.2f · %s" % [sim.satisfaction_rating(),sim.decor_bonus(),"les clients affluent" if sim.rating() >= 4 else ("clientèle normale" if sim.rating() >= 2.5 else "les clients boudent le magasin")])
 	content.add_child(label("REVENUS PAR MINUTE · 15 DERNIÈRES MINUTES",17))
 	var chart := Control.new(); chart.custom_minimum_size = Vector2(0,150); content.add_child(chart)
@@ -374,7 +410,7 @@ func stats_sheet():
 			var x := (16 - values.size() + i) * w
 			var color := Color("8c6bc4") if i == values.size()-1 else Color("2f9e6a")
 			chart.draw_rect(Rect2(x+3,130-h,w-6,h),color)
-		chart.draw_string(ThemeDB.fallback_font,Vector2(0,148),"max %d pièces/min · barre violette : minute en cours" % top,HORIZONTAL_ALIGNMENT_LEFT,-1,14,MUTED))
+		chart.draw_string(bold,Vector2(0,148),"max %d pièces/min · barre violette : minute en cours" % top,HORIZONTAL_ALIGNMENT_LEFT,-1,14,MUTED))
 	var redraw_driver := label("")
 	redraw_driver.hide()
 	content.add_child(redraw_driver)
@@ -439,17 +475,23 @@ func refresh():
 	else:
 		status.text = "Note %.1f/5 · %s · %d clients" % [sim.rating(),"mesure des ventes…" if rpm < 0 else "%.0f pièces/min" % rpm,sim.customers.size()]
 		status.remove_theme_color_override("font_color")
+	var goal := sim.progression.next_goal()
+	goal_bar.visible = not goal.is_empty()
+	if not goal.is_empty():
+		goal_bar.max_value = goal.cost; goal_bar.value = mini(sim.money,goal.cost)
+		goal_bar.tooltip_text = "%d / %d pièces pour le prochain palier" % [mini(sim.money,goal.cost),goal.cost]
 	advice.text = sim.advice
 	# Calm moments show the daily objective instead of generic advice.
 	if sim.advice.begins_with("L’activité est fluide") and not sim.daily.is_empty() and not sim.daily.done:
 		advice.text = "Objectif du jour : %s · %d/%d · +%d pièces" % [sim.daily_text(),sim.daily.progress,sim.daily.goal,sim.daily.reward]
 	if sim.tutorial >= 5:
-		show_tip("world","Glissez pour explorer le quartier ; « Recentrer » ramène au magasin, « Stats » montre la note.")
+		show_tip("world","Glissez pour explorer le quartier ; la cible recentre le magasin, le graphique montre la note.")
 	if sim.outcomes.size() >= 10 and sim.satisfaction_rating() < 3.0:
 		show_tip("rating","Note en baisse : rayons vides et files longues mécontentent les clients, qui viennent alors moins.")
 	if sim.franchise_ready():
 		show_tip("franchise","Franchise disponible dans « Construire » : nouvel atelier avec un bonus de vente permanent.")
 	tutorial_box.visible = sim.tutorial < 5
+	toast_label.position.y = 320 if tutorial_box.visible else 205
 	var steps := ["1/5 · Observez une vente : un client prend un produit, puis paie.","2/5 · Touchez le rayon outillage pour voir ses améliorations.","3/5 · Achetez une amélioration. La première coûte 100 pièces.","4/5 · Observez l’employé : il transporte un carton de la réserve au rayon.","5/5 · Prochain objectif : la peinture, 300 pièces. Touchez ici pour terminer."]
 	if sim.tutorial < 5: tutorial_label.text = steps[sim.tutorial]
 	for row in rows:
@@ -484,7 +526,8 @@ func _process(dt: float):
 		pulse += dt
 		var glow := 0.0 if not build_ready or sim.settings.reduced_effects else 0.18*(0.5+0.5*sin(pulse*5))
 		build_button.modulate = Color(1+glow,1+glow,1+glow)
-		build_button.text = "Construire !" if build_ready else "Construire"
+		build_button.tooltip_text = "Construire · amélioration disponible" if build_ready else "Construire"
+		build_button.queue_redraw()
 func _input(event: InputEvent):
 	if sim == null: return
 	if sim.tutorial == 4 and not is_instance_valid(sheet):

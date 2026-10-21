@@ -32,6 +32,7 @@ func run_all():
 	test_workers_traits()
 	test_new_save_fields()
 	test_legacy_release_save()
+	test_visual_layout_progression()
 	print("RESULT: %d assertions, %d failures" % [checks,failures])
 	quit(1 if failures else 0)
 func test_loop():
@@ -352,3 +353,22 @@ func test_legacy_release_save():
 	expect(sim.settings.music and sim.settings.volume == 0.8 and not sim.daily.is_empty(),"new settings and daily objective receive defaults")
 	run_for(sim,120)
 	expect(sim.stock_audit() == 0 and sim.total_sales > int(data.total_sales),"original release save resumes live trading")
+
+func test_visual_layout_progression():
+	var s := BricoSimulation.new(35)
+	expect(s.capacity("tools") == 12,"larger starting shelf has twelve units")
+	var goal := s.progression.next_goal()
+	expect(goal.action == "unlock" and goal.target == "paint" and goal.cost == s.cfg.family("paint").unlock,"saving target matches real paint price")
+	s.money = 100000
+	for purchase in [["unlock","paint"],["expand",""],["unlock","garden"],["checkout",""],["expand",""],["unlock","electric"],["unlock","plumbing"]]:
+		goal = s.progression.next_goal()
+		expect(goal.action == purchase[0] and goal.target == purchase[1],"next objective follows actual prerequisites")
+		expect(goal.cost == s.progression.cost(purchase[0],purchase[1]),"objective price equals purchase price")
+		s.progression.buy(purchase[0],purchase[1])
+		for f in s.cfg.families:
+			if not s.opened[f.id]: continue
+			var target := Vector2(f.worker[0],f.worker[1])
+			expect(not s.nav.path(s.nav.stock_point,target).is_empty(),"enlarged shelf retains worker route: "+f.id)
+			for slot in f.customer:
+				expect(not s.nav.path(s.nav.entrance,Vector2(slot[0],slot[1])).is_empty(),"enlarged shelf retains customer route: "+f.id)
+	expect(s.progression.next_goal().is_empty(),"all build targets exhausted after five families")

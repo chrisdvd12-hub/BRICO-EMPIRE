@@ -15,6 +15,12 @@ func capture(name: String):
 func mouse_button(pos: Vector2, pressed: bool):
 	var event := InputEventMouseButton.new(); event.position = pos; event.button_index = MOUSE_BUTTON_LEFT; event.pressed = pressed
 	Input.parse_input_event(event)
+func touch_at(pos: Vector2, down: bool, index := 0):
+	var e := InputEventScreenTouch.new(); e.index = index; e.position = pos; e.pressed = down
+	Input.parse_input_event(e)
+func touch_button(b: Button):
+	var at := b.get_global_rect().get_center()
+	touch_at(at,true); await frame(); touch_at(at,false); await frame()
 func run():
 	root.size = Vector2i(540,960)
 	var main := load("res://main.tscn") as PackedScene
@@ -23,6 +29,7 @@ func run():
 	game.set_process(false)
 	for i in range(30*70): game.sim.tick(1.0/30)
 	game.ui.refresh()
+	game.ui.toast_timer = 0; game.ui.toasts.clear()
 	await capture("01-boutique")
 	var view: BricoStoreView = game.view
 	var ui: BricoGameUI = game.ui
@@ -48,6 +55,7 @@ func run():
 	expect(ui.selection.is_empty(),"drag does not select")
 	expect(view.camera_offset != old_camera,"mouse drag pans")
 	view.recenter()
+	var zoom_before := view.camera_zoom
 	# Actual two-finger InputEvent stream.
 	for item in [[0,Vector2(200,400)],[1,Vector2(300,400)]]:
 		var touch := InputEventScreenTouch.new(); touch.index = item[0]; touch.position = item[1]; touch.pressed = true; Input.parse_input_event(touch)
@@ -56,14 +64,45 @@ func run():
 	for i in [0,1]:
 		var release := InputEventScreenTouch.new(); release.index = i; release.position = Vector2(200 if i == 0 else 380,400); release.pressed = false; Input.parse_input_event(release)
 	await frame()
-	expect(view.camera_zoom > .69,"two-finger pinch zooms")
+	expect(view.camera_zoom > zoom_before,"two-finger pinch zooms")
 	expect(ui.selection.is_empty(),"pinch does not select")
 	view.recenter()
+	# All four real Controls must respond to a native touch, with empty visible labels.
+	for kind in ["workers","build","achievements","settings"]:
+		var b: Button = ui.nav_buttons[kind]
+		expect(b.text.is_empty() and b.icon != null,"navigation is icon-only: "+kind)
+		expect(b.get_meta("cta") == "nav","navigation shares one colour: "+kind)
+		await touch_button(b)
+		expect(ui.selection == kind,"touch opens GUI menu: "+kind)
+		var body: Control = ui.sheet.get_child(0).get_child(0)
+		expect(body.get_global_rect().end.x <= ui.root.size.x,"sheet fits portrait width: "+kind)
+		expect(not view.held and view.fingers.is_empty(),"UI touch leaves no world gesture")
+		ui.close_sheet(); await frame()
+	# A single touch buys once; generated mouse events must never select the world.
+	ui.open_sheet("shelf","tools"); await frame()
+	var cap_before: int = game.sim.capacity("tools")
+	var cash_before: int = game.sim.money
+	var price: int = game.sim.progression.cost("shelf_capacity","tools")
+	await touch_button(ui.rows[0].button)
+	expect(game.sim.capacity("tools") == cap_before+game.sim.cfg.v("capacity_step"),"touch upgrade applied exactly once")
+	expect(game.sim.money == cash_before-price,"touch upgrade charged exactly once")
+	ui.close_sheet(); await frame()
+	# Hard limits clamp both axes at every supported zoom, preserving the property.
+	for z in [.5,.8,1.3]:
+		view.camera_zoom = z
+		for extreme in [Vector2(-1e6,-1e6),Vector2(1e6,1e6)]:
+			view.camera_offset = extreme; view.clamp_camera()
+			var bounds := view.projected_map_bounds()
+			var screen := Rect2(bounds.position*z+view.camera_offset,bounds.size*z)
+			expect(screen.position.x <= 0.1 and screen.end.x >= 539.9,"horizontal camera stays inside map")
+			expect(screen.position.y <= 196.1 and screen.end.y >= 781.9,"vertical camera stays inside map")
+	view.recenter()
 	game.sim.money = 50000
-	for action in [["unlock","paint"],["expand",""],["unlock","garden"],["checkout",""],["hire",""],["expand",""]]: game.sim.progression.buy(action[0],action[1])
+	for action in [["unlock","paint"],["expand",""],["unlock","garden"],["checkout",""],["hire",""],["expand",""],["unlock","electric"],["unlock","plumbing"],["hire",""]]: game.sim.progression.buy(action[0],action[1])
 	game.sim.tutorial = 5
 	for i in range(30*120): game.sim.tick(1.0/30)
 	ui.refresh()
+	ui.toast_timer = 0; ui.toasts.clear()
 	await capture("03-magasin-agrandi")
 	ui.open_sheet("workers",""); await capture("04-equipe")
 	ui.close_sheet(); await frame()
@@ -96,5 +135,6 @@ func run():
 	expect(ui.root.size.x >= 360,"UI remains sized on small screen")
 	print("UI RESULT: ",failures," failures")
 	game.save_store.reset()
-	game.queue_free(); await process_frame
-	quit(1 if failures else 0)
+	game.queue_free(); await process_frame; await process_frame
+	game = null
+	call_deferred("quit",1 if failures else 0)

@@ -5,7 +5,7 @@
   "arrival_min": 4.0,
   "arrival_max": 6.0,
   "customer_speed": 83.0,
-  "shelf_capacity": 8,
+  "shelf_capacity": 12,
   "reserve_capacity": 24,
   "delivery_interval": 20.0,
   "delivery_batch": 10,
@@ -21,8 +21,8 @@
   "worker_price": 450,
   "checkout_price": 900,
   "expansion_prices": [
-    1500,
-    2800
+    3500,
+    4800
   ],
   "expansion_reserve_bonus": 24,
   "upgrade_base": 100,
@@ -51,8 +51,8 @@
       "rect": [
         160,
         400,
-        100,
-        90
+        140,
+        100
       ],
       "customer": [
         [
@@ -79,8 +79,8 @@
       "rect": [
         370,
         400,
-        100,
-        90
+        140,
+        100
       ],
       "customer": [
         [
@@ -107,7 +107,7 @@
       "rect": [
         370,
         190,
-        100,
+        140,
         80
       ],
       "customer": [
@@ -135,7 +135,7 @@
       "rect": [
         160,
         30,
-        100,
+        140,
         70
       ],
       "customer": [
@@ -163,7 +163,7 @@
       "rect": [
         370,
         30,
-        100,
+        140,
         70
       ],
       "customer": [

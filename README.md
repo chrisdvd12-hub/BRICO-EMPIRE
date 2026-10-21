@@ -4,6 +4,12 @@ Première version jouable d’un jeu de gestion mobile en français. Les clients
 
 **Moteur : Godot 4.6.3 stable, GDScript, rendu Compatibility.** Aucun module externe, serveur, compte, publicité ou achat intégré. Cible Android/iOS portrait ; développement et tests sur Linux.
 
+## Refonte visuelle et tactile
+
+Rayons 40 % plus larges, capacité de base de 12 unités ; mobilier propre à chaque famille, façade vitrée avec auvent, police arrondie Fredoka embarquée sous licence OFL, tenues des employés différenciées et effets d’ouverture. Trois pictogrammes bleu pétrole en bas ; petit engrenage des paramètres en haut à droite. Caméra bornée à la propriété, gestes tactiles et panneaux adaptés aux écrans étroits, jauge d’épargne vers le prochain palier. Les parties existantes conservent leurs stocks et améliorations.
+
+Voir [le bilan de cette refonte](docs/REDESIGN.md), ses mesures et ses limites de validation mobile.
+
 ## Jouer directement sur Safari
 
 **[Ouvrir Brico Empire sur Vercel](https://brico-empire.vercel.app)**

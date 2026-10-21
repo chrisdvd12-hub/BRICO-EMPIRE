@@ -54,7 +54,7 @@ with sync_playwright() as p:
         assert time.monotonic()-started < 120,'No automatic sale within the browser test timeout'
     sale_wait_seconds = round(time.monotonic()-started,1)
     # Pointer positions scale with the portrait game canvas.
-    page.mouse.click(97*width/540,898*height/960)
+    page.touchscreen.tap(85*width/540,901*height/960)
     page.wait_for_timeout(600)
     page.screenshot(path=str(root/'docs/08-web-equipe.png'))
     assert 'Recruter' in ocr('08-web-equipe.png'),'The team menu must actually open'

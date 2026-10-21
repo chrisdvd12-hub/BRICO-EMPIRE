@@ -68,6 +68,19 @@ func buy(action: String, target: String = "") -> bool:
 	sim.changed.emit()
 	sim.purchased.emit(action,target)
 	return true
+func next_goal() -> Dictionary:
+	# A visible saving target follows the same prerequisites as the real purchases.
+	var action := ""
+	var target := ""
+	if not sim.opened.paint: action = "unlock"; target = "paint"
+	elif sim.expansion == 0: action = "expand"
+	elif not sim.opened.garden: action = "unlock"; target = "garden"
+	elif sim.checkouts == 1: action = "checkout"
+	elif sim.expansion == 1: action = "expand"
+	elif not sim.opened.electric: action = "unlock"; target = "electric"
+	elif not sim.opened.plumbing: action = "unlock"; target = "plumbing"
+	if action.is_empty(): return {}
+	return {"cost":cost(action,target),"action":action,"target":target}
 func objective() -> String:
 	if not sim.opened.paint: return "Ouvrir la peinture · %d pièces" % sim.cfg.family("paint").unlock
 	if sim.expansion == 0: return "Agrandir le magasin · %d pièces" % sim.cfg.v("expansion_prices")[0]

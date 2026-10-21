@@ -85,6 +85,7 @@ func _notification(what: int):
 	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		if sim != null and not suspended:
 			suspended = true; save_game(); accumulator = 0
+			if view != null: view.cancel_gestures()
 	elif what == NOTIFICATION_APPLICATION_RESUMED or what == NOTIFICATION_APPLICATION_FOCUS_IN:
 		if sim != null and suspended:
 			var data := save_store.load_data()

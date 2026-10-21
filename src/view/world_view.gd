@@ -5,8 +5,9 @@ extends Node2D
 # passers-by, cloud shadows and night lights every frame above it.
 var sim: BricoSimulation
 var animated := false
+var map_bounds := Rect2(-220,-150,1100,1500)
 var phase := 0.0
-var font := ThemeDB.fallback_font
+var font: Font = preload("res://assets/fonts/Fredoka-Regular.ttf")
 var trees: Array = []
 var patches: Array = []
 var cars: Array = []
@@ -28,7 +29,8 @@ const CAR_COLORS := ["d9634c","3f7fb5","f2c14e","eeeeee","6c9a5b","9a6bb0","2f3b
 const SHIRTS := ["d98771","8d9abb","7eaf8e","d2ac66","ae8bbb","6ea5ac"]
 # Areas kept free of random trees: store and parking, road band, house row, park pond, café.
 const FREE := [Rect2(-110,-110,820,1240),Rect2(-2600,1080,5800,250),Rect2(-2600,1320,5800,190),Rect2(-640,330,400,300),Rect2(730,380,420,320),Rect2(760,760,300,220)]
-func setup(simulation: BricoSimulation, is_animated: bool):
+func setup(simulation: BricoSimulation, is_animated: bool, bounds: Rect2):
+	map_bounds = bounds
 	sim = simulation
 	animated = is_animated
 	var rng := RandomNumberGenerator.new(); rng.seed = 4242
@@ -202,6 +204,13 @@ func draw_static():
 	cafe(Rect2(800,790,220,150),Color("f3e3c8"),"BOULANGERIE",Color("3f7fb5"))
 	for at in lamp_points(): lamp(at)
 	for t in trees: tree(t.p,t.s,t.v)
+	# Low hedges frame the property; no endless camera travel through distant decor.
+	for x in range(int(map_bounds.position.x),int(map_bounds.end.x),36):
+		box(Rect2(x,map_bounds.position.y,34,14),Color("548867"),18)
+		box(Rect2(x,map_bounds.end.y-14,34,14),Color("548867"),18)
+	for y in range(int(map_bounds.position.y),int(map_bounds.end.y),36):
+		if y > 1110 and y < 1300: continue
+		for x in [map_bounds.position.x,map_bounds.end.x-14]: box(Rect2(x,y,14,34),Color("548867"),18)
 func draw_strokes(layer: String):
 	for item in strokes:
 		if item[3] == layer and not (item[0] as PackedVector2Array).is_empty(): draw_multiline(item[0],item[1],item[2])
