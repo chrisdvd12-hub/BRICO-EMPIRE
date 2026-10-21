@@ -26,6 +26,11 @@ func run_all():
 	test_new_families()
 	test_events()
 	test_achievements()
+	test_profiles_rating()
+	test_daily()
+	test_decor_franchise()
+	test_workers_traits()
+	test_new_save_fields()
 	print("RESULT: %d assertions, %d failures" % [checks,failures])
 	quit(1 if failures else 0)
 func test_loop():
@@ -229,3 +234,96 @@ func test_achievements():
 	var bad := s.snapshot(1000); bad.achievements = ["unknown",42,"sales_10","sales_10"]
 	r = BricoSimulation.new(1); r.restore(bad)
 	expect(r.achievements == ["sales_10"],"invalid achievement ids filtered")
+func test_profiles_rating():
+	var s := BricoSimulation.new(41)
+	s.cfg.values.vip_chance = 0.3; s.cfg.values.artisan_chance = 0.4
+	var paid := {"vip":0,"artisan":0,"normal":0}
+	var two_items := {"n":0}
+	s.sale.connect(func(_a,_p):
+		for c in s.customers:
+			if c.state == BricoCustomer.State.PAYING and c.timer >= s.checkout_time(c.checkout) - 0.001:
+				paid[c.profile] += 1
+				if c.items == 2: two_items.n += 1)
+	run_for(s,400)
+	expect(paid.vip > 0 and paid.artisan > 0,"vip and artisan customers are served")
+	expect(two_items.n > 0,"artisans buy two units")
+	expect(s.stock_audit() == 0,"multi-item baskets preserve inventory")
+	expect(s.money == s.cfg.v("initial_money")+s.total_revenue+s.achievement_rewards,"profiles only change settled revenue")
+	expect(s.rating() >= 1.0 and s.rating() <= 5.0,"rating bounded")
+	var happy := BricoSimulation.new(2)
+	for i in range(40): happy.outcomes.append(1.0)
+	var sad := BricoSimulation.new(2)
+	for i in range(40): sad.outcomes.append(0.0)
+	expect(happy.rating() > 4.5 and sad.rating() < 1.5,"rating follows satisfaction")
+	var fresh := BricoSimulation.new(2)
+	for i in range(5): fresh.outcomes.append(1.0)
+	expect(fresh.rating() < 4.3 and fresh.stat("rating10") == 0,"a handful of visits cannot max the rating")
+	expect(happy.arrival_multiplier() < sad.arrival_multiplier(),"good rating brings customers faster")
+	var empty := BricoSimulation.new(7)
+	empty.inventory.shelves.tools = 0; empty.inventory.reserve.tools = 0; empty.inventory.delivered = 0; empty.delivery_timer = 200
+	run_for(empty,90)
+	expect(empty.outcomes.size() > 0 and empty.satisfaction_rating() < 3.0,"empty shelves upset customers")
+func test_daily():
+	var s := BricoSimulation.new(13)
+	expect(not s.daily.is_empty() and s.daily.goal > 0,"a daily objective exists from the start")
+	s.daily = {"day":1,"kind":"family","family":"tools","goal":3,"progress":0,"reward":100,"done":false}
+	var before := s.money
+	var done: Array = []
+	s.daily_completed.connect(func(d): done.append(d))
+	s.progress_daily("family",2,"paint")
+	expect(s.daily.progress == 0,"other families do not count")
+	s.progress_daily("family",5,"tools")
+	expect(s.daily.done and s.money == before+100 and done.size() == 1,"daily completes once with reward")
+	s.progress_daily("family",5,"tools")
+	expect(s.money == before+100 and s.dailies_done == 1,"completed daily pays once")
+	var days: Array = []
+	s.new_day.connect(func(d): days.append(d))
+	run_for(s,s.cfg.v("day_seconds")+5)
+	expect(days.size() == 1 and s.daily.day == 2,"next day brings a new objective")
+	expect(s.best_day > 0,"best day recorded")
+	expect(s.minute_revenue.size() >= 4,"revenue per minute tracked")
+func test_decor_franchise():
+	var s := BricoSimulation.new(19)
+	s.money = 100000
+	var base := s.rating()
+	expect(s.progression.buy("decor","plants") and s.decor.has("plants"),"decor purchase")
+	expect(not s.progression.buy("decor","plants"),"decor bought once")
+	expect(not s.progression.buy("decor","unknown"),"unknown decor rejected")
+	expect(s.rating() > base,"decor improves rating")
+	expect(not s.progression.buy("franchise"),"franchise requires a full store")
+	for a in [["unlock","paint"],["expand",""],["unlock","garden"],["expand",""],["unlock","electric"],["unlock","plumbing"],["hire",""]]: s.progression.buy(a[0],a[1])
+	run_for(s,60)
+	var sales := s.total_sales
+	expect(s.progression.buy("franchise"),"franchise when all families open")
+	expect(s.franchise_level == 1 and s.expansion == 0 and not s.opened.paint and s.decor.is_empty() and s.workers.size() == 1,"franchise resets the store")
+	expect(s.money == s.cfg.v("initial_money")+s.cfg.v("franchise_start_bonus"),"franchise start money")
+	expect(s.total_sales == sales and is_equal_approx(s.franchise_multiplier(),1.15),"history kept and permanent bonus")
+	run_for(s,120)
+	expect(s.stock_audit() == 0 and s.total_sales > sales,"new workshop runs after franchise")
+func test_workers_traits():
+	var s := BricoSimulation.new(5)
+	var a := BricoWorker.new(0); var b := BricoWorker.new(1); var c := BricoWorker.new(2)
+	expect(a.name != b.name and a.specialty != b.specialty and b.specialty != c.specialty,"workers have distinct names and specialties")
+	expect(a.speed(s) > s.worker_speed(),"fast worker moves faster")
+	expect(b.carry(s) > s.carry_capacity(),"strong worker carries more")
+	expect(c.restock_duration(s) < s.restock_time(),"careful worker restocks faster")
+func test_new_save_fields():
+	var s := BricoSimulation.new(23)
+	s.money = 50000
+	s.progression.buy("decor","neon")
+	run_for(s,200)
+	s.settings.volume = 0.35
+	var r := BricoSimulation.new(1); r.restore(s.snapshot(1000))
+	expect(r.decor == s.decor and r.outcomes.size() == s.outcomes.size() and is_equal_approx(r.rating(),s.rating()),"rating and decor restored")
+	expect(r.daily.kind == s.daily.kind and r.daily.progress == s.daily.progress,"daily restored")
+	expect(r.family_sales == s.family_sales and r.minute_revenue == s.minute_revenue,"stats restored")
+	expect(is_equal_approx(r.settings.volume,0.35) and r.settings.sound == s.settings.sound,"volume restored with other settings")
+	var bad := s.snapshot(1000)
+	bad.outcomes = [2,-1,0.5,"x"]; bad.decor = ["neon","bogus",3]; bad.daily = {"kind":"nope"}; bad.franchise_level = -4; bad.settings = {"volume":9}
+	r = BricoSimulation.new(1); r.restore(bad)
+	expect(r.outcomes == [0.5] and r.decor == ["neon"] and r.franchise_level == 0 and not r.daily.is_empty() and r.settings.volume == 1.0,"invalid new fields sanitised")
+	var store := BricoSaveStore.new("user://test_import.json")
+	expect(store.valid(JSON.parse_string(JSON.stringify(s.snapshot(1000)))),"exported snapshot passes validation")
+	var code := Marshalls.utf8_to_base64(JSON.stringify(s.snapshot(1000)))
+	expect(JSON.parse_string(Marshalls.base64_to_utf8(code)).money == s.money,"save code round-trips")
+	store.reset()

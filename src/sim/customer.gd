@@ -12,11 +12,19 @@ var checkout := -1
 var timer := 0.0
 var age := 0.0
 var carrying := false
+var items := 0
 var unit_value := 0
 var appearance := 0
 var failures := 0
 var queue_target := Vector2.INF
 var hurried := false
+# "normal", "vip" (tips) or "artisan" (buys two units of the same family).
+var profile := "normal"
+# Time spent waiting (slot, stock, queue): drives satisfaction when leaving.
+var waited := 0.0
+var rated := false
+var bubble := ""
+var bubble_time := 0.0
 func _init(number: int, entrance: Vector2):
 	id = number
 	pos = entrance + Vector2((number % 3 - 1) * 12, 0)
@@ -29,19 +37,32 @@ func go(sim, target: Vector2) -> bool:
 	return true
 func speed(sim) -> float:
 	return sim.cfg.v("customer_speed") * (sim.cfg.v("hurried_speed") if hurried else 1.0)
+func patience(sim) -> float:
+	return sim.cfg.v("satisfaction_patience") * (0.65 if hurried else 1.0)
 func release_slot(sim):
 	if slot >= 0:
 		sim.slots[family][slot] = -1
 		slot = -1
 func leave(sim):
 	release_slot(sim)
+	# Leaving empty-handed is the worst outcome for the store rating.
+	if not rated and items == 0:
+		rated = true
+		sim.record_outcome(self, 0.0)
 	state = State.LEAVING
 	if not go(sim, sim.nav.entrance):
 		pos = sim.nav.entrance
 		state = State.DONE
+func finish_picking(sim):
+	var per_item: float = sim.sale_value(family) * sim.value_multiplier() * sim.franchise_multiplier()
+	var tip: float = sim.cfg.v("vip_tip") if profile == "vip" else 0.0
+	unit_value = int(round(per_item * items * (1.0 + tip)))
+	release_slot(sim)
+	state = State.CHOOSING_CHECKOUT
 func tick(sim, dt: float):
 	age += dt
 	timer += dt
+	bubble_time = maxf(0, bubble_time - dt)
 	match state:
 		State.ARRIVING:
 			state = State.CHOOSING
@@ -58,6 +79,7 @@ func tick(sim, dt: float):
 			go(sim, Vector2(290 + (id % 4) * 22, 560 + (id % 3) * 25))
 		State.WAITING_SLOT:
 			BricoNavigation.move_agent(self, dt, speed(sim))
+			if route.is_empty(): waited += dt
 			for i in range(2):
 				if sim.slots[family][i] == -1:
 					slot = i
@@ -72,19 +94,28 @@ func tick(sim, dt: float):
 				state = State.WAITING_STOCK
 				timer = 0
 		State.WAITING_STOCK:
+			waited += dt
 			if sim.inventory.shelves[family] > 0:
 				state = State.PICKING
 				timer = 0
 			elif timer > sim.cfg.v("empty_patience"):
-				sim.empty_departures += 1
-				leave(sim)
+				if items > 0:
+					finish_picking(sim)
+				else:
+					sim.empty_departures += 1
+					leave(sim)
 		State.PICKING:
 			if timer >= sim.pick_time(family):
 				if sim.inventory.pick(family):
+					items += 1
 					carrying = true
-					unit_value = int(round(sim.sale_value(family) * sim.value_multiplier()))
-					release_slot(sim)
-					state = State.CHOOSING_CHECKOUT
+					var wanted := 2 if profile == "artisan" else 1
+					if items < wanted and sim.inventory.shelves[family] > 0:
+						timer = 0
+					else:
+						finish_picking(sim)
+				elif items > 0:
+					finish_picking(sim)
 				else:
 					state = State.WAITING_STOCK
 					timer = 0
@@ -102,6 +133,7 @@ func tick(sim, dt: float):
 					# Keep a taken product; controlled recovery to the legal queue point.
 					pos = target
 			var arrived := BricoNavigation.move_agent(self, dt, speed(sim))
+			if arrived: waited += dt
 			if index == 0 and arrived:
 				state = State.PAYING
 				timer = 0
@@ -109,7 +141,10 @@ func tick(sim, dt: float):
 			if timer >= sim.checkout_time(checkout):
 				sim.record_sale(self)
 				sim.queues[checkout].erase(id)
+				rated = true
+				sim.record_outcome(self, clampf(1.0 - waited / patience(sim), 0.15, 1.0))
 				carrying = false
+				items = 0
 				leave(sim)
 		State.LEAVING:
 			if BricoNavigation.move_agent(self, dt, speed(sim)): state = State.DONE

@@ -19,10 +19,10 @@
   "queue_tolerance": 5,
   "max_workers": 3,
   "worker_price": 450,
-  "checkout_price": 800,
+  "checkout_price": 900,
   "expansion_prices": [
-    1200,
-    2000
+    1500,
+    2800
   ],
   "expansion_reserve_bonus": 24,
   "upgrade_base": 100,
@@ -243,7 +243,7 @@
       "text": "Encaisser 100 ventes",
       "stat": "sales",
       "goal": 100,
-      "reward": 300
+      "reward": 200
     },
     {
       "id": "families_3",
@@ -259,7 +259,7 @@
       "text": "Recruter 3 employés",
       "stat": "workers",
       "goal": 3,
-      "reward": 400
+      "reward": 250
     },
     {
       "id": "events_3",
@@ -267,7 +267,7 @@
       "text": "Vivre 3 événements",
       "stat": "events",
       "goal": 3,
-      "reward": 300
+      "reward": 150
     },
     {
       "id": "level_5",
@@ -275,7 +275,7 @@
       "text": "Monter une amélioration au niveau 5",
       "stat": "max_level",
       "goal": 5,
-      "reward": 500
+      "reward": 300
     },
     {
       "id": "sales_500",
@@ -308,6 +308,83 @@
       "stat": "sales",
       "goal": 2000,
       "reward": 4000
+    },
+    {
+      "id": "rating_45",
+      "name": "Magasin cinq étoiles",
+      "text": "Atteindre une note de 4,5/5",
+      "stat": "rating10",
+      "goal": 45,
+      "reward": 400
+    },
+    {
+      "id": "daily_3",
+      "name": "Fidèle au poste",
+      "text": "Réussir 3 objectifs du jour",
+      "stat": "dailies",
+      "goal": 3,
+      "reward": 400
+    },
+    {
+      "id": "franchise_1",
+      "name": "Première franchise",
+      "text": "Ouvrir un deuxième atelier en franchise",
+      "stat": "franchise",
+      "goal": 1,
+      "reward": 1000
     }
+  ],
+  "vip_chance": 0.1,
+  "artisan_chance": 0.14,
+  "vip_tip": 0.4,
+  "satisfaction_patience": 40.0,
+  "rating_window": 40,
+  "rating_start": 3.5,
+  "rating_arrival_slow": 1.3,
+  "rating_arrival_fast": 0.8,
+  "franchise_step": 0.15,
+  "franchise_start_bonus": 300,
+  "decor": [
+    {
+      "id": "plants",
+      "name": "Plantes vertes",
+      "text": "Des plantes près des murs",
+      "price": 350,
+      "rating": 0.15
+    },
+    {
+      "id": "posters",
+      "name": "Affiches promo",
+      "text": "Affiches colorées au mur du fond",
+      "price": 700,
+      "rating": 0.15
+    },
+    {
+      "id": "neon",
+      "name": "Enseigne néon",
+      "text": "Néon BRICO au-dessus de l’entrée, allumé la nuit",
+      "price": 1400,
+      "rating": 0.25
+    },
+    {
+      "id": "walls",
+      "name": "Murs repeints",
+      "text": "Nouvelle couleur chaleureuse pour les murs",
+      "price": 2200,
+      "rating": 0.25
+    },
+    {
+      "id": "coffee",
+      "name": "Coin café",
+      "text": "Machine à café et tabourets près de l’entrée",
+      "price": 3200,
+      "rating": 0.3
+    }
+  ],
+  "daily_kinds": [
+    "family",
+    "revenue",
+    "happy",
+    "vip"
   ]
 }

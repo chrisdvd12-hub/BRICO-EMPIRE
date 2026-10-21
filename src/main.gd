@@ -27,6 +27,7 @@ func start_game():
 	var audio := BricoAudio.new(); audio.name = "Audio"; add_child(audio); audio.setup(sim)
 	ui.save_requested.connect(save_game)
 	ui.reset_requested.connect(reset_game)
+	ui.import_requested.connect(import_game)
 	ui.speed_changed.connect(func(value): speed = value)
 	sim.purchased.connect(func(_a,_b): save_game())
 	sim.sale.connect(func(_amount,_position): sale_save_pending = true)
@@ -46,6 +47,18 @@ func apply_offline(data: Dictionary, now: int):
 func save_game():
 	if sim == null: return
 	if not save_store.write(sim.snapshot(int(Time.get_unix_time_from_system()))) and ui != null: ui.show_toast(save_store.warning)
+func import_game(code: String):
+	var parser := JSON.new()
+	var text := Marshalls.base64_to_utf8(code)
+	if text.is_empty() or parser.parse(text) != OK or not save_store.valid(parser.data):
+		ui.show_toast("Code de sauvegarde invalide."); return
+	var data: Dictionary = parser.data
+	# Imported time stamp is reset: moving a save never grants an offline estimate.
+	data.last_saved = int(Time.get_unix_time_from_system())
+	if not save_store.write(data):
+		ui.show_toast(save_store.warning); return
+	view.queue_free(); ui.queue_free(); get_node("Audio").queue_free()
+	call_deferred("restart")
 func reset_game():
 	save_store.reset()
 	view.queue_free(); ui.queue_free(); get_node("Audio").queue_free()

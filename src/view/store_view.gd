@@ -37,7 +37,7 @@ func setup(simulation: BricoSimulation):
 	sim.purchased.connect(func(action,target):
 		purchase_flash = 1.0
 		if not target.is_empty() and not sim.cfg.family(target).is_empty(): shelf_flash[target] = 1.0
-		if action == "expand": recenter())
+		if action == "expand" or action == "franchise": recenter())
 func p(v: Vector2) -> Vector2:
 	return Vector2(v.x + v.y * 0.17,v.y * 0.9)
 func unproject(v: Vector2) -> Vector2:
@@ -193,18 +193,78 @@ func character(agent, worker: bool):
 	if worker:
 		round_rect(q+Vector2(-11,-47),Vector2(22,8),ORANGE.lightened(.2),4)
 		draw_rect(Rect2(q+Vector2(-6,-23),Vector2(12,14)),INK)
+	elif agent.profile == "vip":
+		# Gold cap and lapel badge for big spenders.
+		round_rect(q+Vector2(-10,-49),Vector2(20,8),Color("f2c14e"),4)
+		draw_line(q+Vector2(-10,-42),q+Vector2(13,-42),Color("c9952a"),3,true)
+		draw_circle(q+Vector2(4,-24),2.5,Color("f2c14e"))
+	elif agent.profile == "artisan":
+		# Yellow hard hat for tradespeople buying in bulk.
+		draw_arc(q+Vector2(0,-40),10,PI,TAU,14,Color("f2c14e"),6,true)
+		draw_line(q+Vector2(-13,-40),q+Vector2(13,-40),Color("d9a72c"),3,true)
 	else:
 		draw_arc(q+Vector2(0,-39),9,PI,TAU,12,INK.lightened(.05),4,true)
+	if worker:
+		draw_string(font,q+Vector2(-30,-54),agent.name,HORIZONTAL_ALIGNMENT_CENTER,60,12,CREAM)
 	if not worker and agent.hurried and moving and not sim.settings.reduced_effects:
 		for i in range(3): draw_line(q+Vector2(-14,-34+i*9)-agent.direction*4,q+Vector2(-14,-34+i*9)-agent.direction*16,Color(1,1,1,.75),2,true)
 	if (worker and agent.cargo > 0) or (not worker and agent.carrying):
 		round_rect(q+Vector2(-9,-22),Vector2(21,16),Color("cda16d"),2)
 		draw_line(q+Vector2(1,-22),q+Vector2(1,-6),Color("f3d2a5"),3)
+		if not worker and agent.items > 1:
+			round_rect(q+Vector2(-7,-34),Vector2(17,13),Color("d9b27f"),2)
+	if not worker and agent.bubble_time > 0: mood_bubble(q+Vector2(14,-62),agent.bubble,minf(1,agent.bubble_time*2))
 	if worker and agent.state == BricoWorker.State.RESTOCKING:
 		draw_arc(q+Vector2(0,-30),24,-PI/2,-PI/2+TAU*fmod(phase,1),20,Color("8ac29d"),3,true)
 	if debug_states:
 		var state_name: String = BricoWorker.State.keys()[agent.state] if worker else BricoCustomer.State.keys()[agent.state]
 		draw_string(font,q+Vector2(-25,-58),state_name,HORIZONTAL_ALIGNMENT_LEFT,-1,12,CREAM)
+func mood_bubble(at: Vector2, mood: String, alpha: float):
+	var rise := Vector2(0,-6*(1-alpha))
+	at += rise
+	draw_circle(at,13,Color(1,1,1,.95*alpha))
+	draw_colored_polygon(PackedVector2Array([at+Vector2(-6,10),at+Vector2(0,11),at+Vector2(-10,18)]),Color(1,1,1,.95*alpha))
+	var face := {"happy":Color("2f9e6a"),"meh":Color("d9a72c"),"sad":Color("d9634c")}[mood] as Color
+	face.a = alpha
+	draw_circle(at+Vector2(-4,-3),1.8,face); draw_circle(at+Vector2(4,-3),1.8,face)
+	if mood == "happy": draw_arc(at+Vector2(0,1),5,0.2,PI-0.2,10,face,2,true)
+	elif mood == "sad": draw_arc(at+Vector2(0,8),5,PI+0.3,TAU-0.3,10,face,2,true)
+	else: draw_line(at+Vector2(-4,4),at+Vector2(4,4),face,2)
+func decorations(top: int):
+	if sim.decor.has("posters"):
+		var colors := [Color("d9634c"),Color("3f7fb5"),Color("2f9e6a"),Color("e8893a")]
+		for i in range(4):
+			var w := p(Vector2(118+i*130,top+12))
+			draw_rect(Rect2(w+Vector2(0,-50),Vector2(34,24)),colors[i])
+			draw_rect(Rect2(w+Vector2(4,-46),Vector2(26,6)),CREAM)
+			draw_string(font,w+Vector2(2,-30),"-20%",HORIZONTAL_ALIGNMENT_LEFT,-1,10,CREAM)
+	if sim.decor.has("plants"):
+		for at in [Vector2(578,330),Vector2(578,640),Vector2(30,745),Vector2(578,880)]:
+			if at.y < top + 20: continue
+			var q := p(at)
+			ellipse_shape(q+Vector2(2,2),Vector2(13,5),Color(0,0,0,.15))
+			draw_colored_polygon(PackedVector2Array([q+Vector2(-9,-14),q+Vector2(9,-14),q+Vector2(6,0),q+Vector2(-6,0)]),Color("c97a4e"))
+			for k in range(5):
+				var a := -PI/2 + (k-2)*0.45
+				draw_line(q+Vector2(0,-14),q+Vector2(0,-14)+Vector2(cos(a),sin(a))*18,Color("4e8a4b"),5,true)
+	if sim.decor.has("coffee"):
+		box(Rect2(520,828,40,26),Color("5b6f7a"),34)
+		draw_circle(p(Vector2(530,835))+Vector2(0,-40),4,Color("f3e3c8"))
+		for st in [Vector2(495,870),Vector2(530,880)]:
+			var q := p(st); draw_line(q,q+Vector2(0,-14),INK,3); ellipse_shape(q+Vector2(0,-15),Vector2(9,4),Color("d9634c"))
+		text_at(Vector2(496,822),"CAFÉ",12)
+func neon_signs():
+	if not sim.decor.has("neon"): return
+	# Neon letters on the front facade, either side of the entrance.
+	var night := sim.day_hour() >= 19 or sim.day_hour() < 7
+	var flicker := 1.0 if sim.settings.reduced_effects else 0.85+0.15*sin(phase*9)
+	for sign in [[Vector2(55,907),"BRICO",Color(1,.45,.7)],[Vector2(425,907),"OUVERT",Color(.45,.95,1)]]:
+		var at := p(sign[0])+Vector2(0,-4)
+		var tint: Color = sign[2]
+		round_rect(at+Vector2(-6,-24),Vector2(126,28),Color(0.08,.1,.14,.92),7)
+		var glow := tint; glow.a = (0.45 if night else 0.15)*flicker
+		draw_string(font,at+Vector2(0,1),sign[1],HORIZONTAL_ALIGNMENT_CENTER,114,24,glow)
+		draw_string(font,at,sign[1],HORIZONTAL_ALIGNMENT_CENTER,114,22,tint.lightened(.35) if night else tint.lightened(.55))
 func cashier(index: int):
 	var x := 150 if index == 0 else 370
 	if index >= sim.checkouts:
@@ -232,17 +292,18 @@ func _draw():
 	# Floor tiles are cached in BricoStoreFloor, drawn behind this node.
 	var top := 300 if sim.expansion == 0 else (140 if sim.expansion == 1 else 0)
 	# Back and left walls with visible height, panels, high windows and a brand stripe.
-	box(Rect2(0,top,600,12),Color("96bbad"),54)
+	var walls := sim.decor.has("walls")
+	box(Rect2(0,top,600,12),Color("e3b98d") if walls else Color("96bbad"),54)
 	var seams := PackedVector2Array()
 	for x in range(50,600,50):
 		var base := p(Vector2(x,top+12)); seams.append(base); seams.append(base+Vector2(0,-54))
-	draw_multiline(seams,Color("7fa597"),1.5)
+	draw_multiline(seams,Color("c99d72") if walls else Color("7fa597"),1.5)
 	for x in range(40,560,130):
 		var w := p(Vector2(x,top+12))
 		draw_rect(Rect2(w+Vector2(0,-46),Vector2(70,14)),Color("cfe6ea"))
 		draw_line(w+Vector2(0,-46),w+Vector2(70,-46),Color(1,1,1,.8),2)
 	draw_line(p(Vector2(0,top+12))+Vector2(0,-20),p(Vector2(600,top+12))+Vector2(0,-20),ORANGE,4)
-	box(Rect2(0,top,12,900-top),Color("c5d3bd"),48)
+	box(Rect2(0,top,12,900-top),Color("efd3b1") if walls else Color("c5d3bd"),48)
 	var side := PackedVector2Array()
 	for y in range(top+60,900,60):
 		var base := p(Vector2(12,y)); side.append(base); side.append(base+Vector2(0,-48))
@@ -283,6 +344,7 @@ func _draw():
 	if sim.delivery_timer < 3 and sim.expansion >= 1:
 		box(Rect2(160,170,80,45),CREAM,32)
 		text_at(Vector2(166,207),"BRICO",16)
+	decorations(top)
 	for f in sim.cfg.families:
 		if f.expansion <= sim.expansion: shelf(f)
 	for index in range(2): cashier(index)
@@ -298,6 +360,7 @@ func _draw():
 	box(Rect2(390,897,190,10),INK,20)
 	for i in range(6): box(Rect2(220+i*27,916,27,26),ORANGE if i%2 == 0 else CREAM,70)
 	text_at(Vector2(226,959),"BRICO EMPIRE",23,CREAM)
+	neon_signs()
 	for c in coins:
 		var cq := p(c.p)
 		draw_circle(cq,6,Color("e3a72f",1-c.time/0.9))

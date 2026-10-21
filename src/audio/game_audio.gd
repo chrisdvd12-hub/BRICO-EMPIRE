@@ -7,6 +7,11 @@ var purchase_player: AudioStreamPlayer
 var achievement_player: AudioStreamPlayer
 var event_player: AudioStreamPlayer
 var music_player: AudioStreamPlayer
+var night_player: AudioStreamPlayer
+var bird_player: AudioStreamPlayer
+var cricket_player: AudioStreamPlayer
+var ambience_timer := 4.0
+const MUSIC_DB := -23.0
 func setup(simulation: BricoSimulation):
 	sim = simulation
 	sale_player = player(tone(740,0.10),-21)
@@ -27,14 +32,41 @@ func player(stream: AudioStreamWAV, db: float) -> AudioStreamPlayer:
 	var p := AudioStreamPlayer.new(); add_child(p); p.stream = stream; p.volume_db = db
 	return p
 func start_music():
-	music_player = player(music(),-23)
+	music_player = player(music(),MUSIC_DB)
+	bird_player = player(chirp(),-26)
+	cricket_player = player(crickets(),-30)
 	update_music()
+	# Night loop is synthesised a frame later to spread the start-up cost.
+	call_deferred("start_night_music")
+func start_night_music():
+	night_player = player(music([[220.0,261.63,329.63,440.0],[174.61,220.0,261.63,349.23],[130.81,196.0,261.63,329.63],[196.0,246.94,293.66,392.0]],0.55,3.5),-80)
+func night_amount() -> float:
+	var h := sim.day_hour()
+	if h >= 20 or h < 6: return 1.0
+	if h >= 18: return (h-18)/2.0
+	if h < 8: return 1.0-(h-6)/2.0
+	return 0.0
 func update_music():
 	if music_player == null: return
-	if sim.settings.music and not music_player.playing: music_player.play()
-	elif not sim.settings.music and music_player.playing: music_player.stop()
-func _process(_dt: float):
+	for p in [music_player,night_player]:
+		if p == null: continue
+		if sim.settings.music and not p.playing: p.play()
+		elif not sim.settings.music and p.playing: p.stop()
+	# Crossfade between the day and night loops following the in-game clock.
+	var n := night_amount()
+	music_player.volume_db = MUSIC_DB + linear_to_db(maxf(0.001,1.0-n))
+	if night_player != null: night_player.volume_db = MUSIC_DB - 2 + linear_to_db(maxf(0.001,n))
+func _process(dt: float):
+	AudioServer.set_bus_volume_db(0,linear_to_db(maxf(0.0001,float(sim.settings.volume))))
 	update_music()
+	if bird_player == null or not sim.settings.sound: return
+	ambience_timer -= dt
+	if ambience_timer <= 0:
+		var night := night_amount() > 0.5
+		ambience_timer = randf_range(3.0,6.0) if night else randf_range(6.0,14.0)
+		var p := cricket_player if night else bird_player
+		p.pitch_scale = randf_range(0.9,1.15)
+		p.play()
 func tone(hz: float, seconds: float) -> AudioStreamWAV:
 	var stream := AudioStreamWAV.new(); stream.format = AudioStreamWAV.FORMAT_16_BITS; stream.mix_rate = 22050
 	var data := PackedByteArray(); var count := int(22050*seconds); data.resize(count*2)
@@ -57,11 +89,33 @@ func melody(notes: Array, step: float) -> AudioStreamWAV:
 		data.encode_s16(i*2,int((sin(TAU*notes[n]*t)+0.3*sin(TAU*notes[n]*2*t))*envelope*11000))
 	stream.data = data
 	return stream
-# Calm four-chord loop (C, Am, F, G): plucked arpeggio over a soft bass.
-func music() -> AudioStreamWAV:
-	var chords := [[261.63,329.63,392.0,523.25],[220.0,261.63,329.63,440.0],[174.61,220.0,261.63,349.23],[196.0,246.94,293.66,392.0]]
+func chirp() -> AudioStreamWAV:
+	# Two quick rising whistles, like a sparrow.
+	var stream := AudioStreamWAV.new(); stream.format = AudioStreamWAV.FORMAT_16_BITS; stream.mix_rate = 22050
+	var count := int(22050*0.42); var data := PackedByteArray(); data.resize(count*2)
+	var phase_acc := 0.0
+	for i in range(count):
+		var t := float(i)/22050
+		var local := fmod(t,0.21)
+		var hz := 2600.0 + 1400.0*local/0.12
+		phase_acc += TAU*hz/22050
+		var env := maxf(0,sin(PI*minf(1,local/0.12))) if local < 0.12 else 0.0
+		data.encode_s16(i*2,int(sin(phase_acc)*env*9000))
+	stream.data = data
+	return stream
+func crickets() -> AudioStreamWAV:
+	# Short pulsed high tone, three chirps.
+	var stream := AudioStreamWAV.new(); stream.format = AudioStreamWAV.FORMAT_16_BITS; stream.mix_rate = 22050
+	var count := int(22050*0.5); var data := PackedByteArray(); data.resize(count*2)
+	for i in range(count):
+		var t := float(i)/22050
+		var gate := 1.0 if fmod(t,0.16) < 0.07 and fmod(t*90,1.0) < 0.6 else 0.0
+		data.encode_s16(i*2,int(sin(TAU*4300*t)*gate*6000))
+	stream.data = data
+	return stream
+# Calm four-chord loop (C, Am, F, G by default): plucked arpeggio over a soft bass.
+func music(chords: Array = [[261.63,329.63,392.0,523.25],[220.0,261.63,329.63,440.0],[174.61,220.0,261.63,349.23],[196.0,246.94,293.66,392.0]], note_len := 0.4, decay := 5.5) -> AudioStreamWAV:
 	var pattern := [0,1,2,3,2,1,2,3]
-	var note_len := 0.4
 	var chord_len := note_len*pattern.size()
 	var count := int(MUSIC_RATE*chord_len*chords.size())
 	var data := PackedByteArray(); data.resize(count*2)
@@ -72,7 +126,7 @@ func music() -> AudioStreamWAV:
 		var tc := fmod(t,chord_len)
 		var tn := fmod(tc,note_len)
 		var hz: float = chord[pattern[int(tc/note_len)]]
-		var pluck := sin(TAU*hz*tn) * exp(-tn*5.5) * minf(1,tn*300)
+		var pluck := sin(TAU*hz*tn) * exp(-tn*decay) * minf(1,tn*300)
 		var bass_hz: float = chord[0]/2
 		var bass := sin(TAU*bass_hz*tc) * (0.55+0.45*exp(-tc*1.2)) * minf(1,tc*20) * minf(1,(chord_len-tc)*20)
 		data.encode_s16(i*2,int((pluck*0.55+bass*0.35)*14000))

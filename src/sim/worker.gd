@@ -10,9 +10,28 @@ var family := ""
 var cargo := 0
 var timer := 0.0
 var waiting_goods := false
+# Each employee has a stable name and specialty derived from their slot.
+const NAMES := ["Léa","Karim","Inès","Tom","Sofia","Malik"]
+const TRAITS := ["Rapide","Costaud","Minutieux"]
+var name := ""
+var specialty := ""
 func _init(number: int):
 	id = number
 	pos = Vector2(130 + number * 26, 580)
+	name = NAMES[number % NAMES.size()]
+	specialty = TRAITS[number % TRAITS.size()]
+func speed(sim) -> float:
+	return sim.worker_speed() * (1.2 if specialty == "Rapide" else 1.0)
+func carry(sim) -> int:
+	return sim.carry_capacity() + (2 if specialty == "Costaud" else 0)
+func restock_duration(sim) -> float:
+	return sim.restock_time() * (0.75 if specialty == "Minutieux" else 1.0)
+static func specialty_text(value: String) -> String:
+	match value:
+		"Rapide": return "se déplace 20 % plus vite"
+		"Costaud": return "porte 2 unités de plus"
+		"Minutieux": return "remplit le rayon 25 % plus vite"
+	return ""
 func cancel(sim):
 	if cargo > 0:
 		sim.inventory.reserve[family] += cargo
@@ -46,13 +65,13 @@ func tick(sim, dt: float):
 				if route.is_empty(): cancel(sim)
 				else: state = State.TO_RESERVE
 		State.TO_RESERVE:
-			if BricoNavigation.move_agent(self, dt, sim.worker_speed()):
+			if BricoNavigation.move_agent(self, dt, speed(sim)):
 				state = State.LOADING
 				timer = 0
 		State.LOADING:
 			if timer >= sim.cfg.v("loading_seconds"):
 				var space: int = sim.capacity(family) - sim.inventory.shelves[family]
-				cargo = sim.inventory.take_reserve(family, mini(sim.carry_capacity(),space))
+				cargo = sim.inventory.take_reserve(family, mini(carry(sim),space))
 				if cargo == 0:
 					cancel(sim)
 					return
@@ -61,11 +80,11 @@ func tick(sim, dt: float):
 				if route.is_empty(): cancel(sim)
 				else: state = State.CARRYING
 		State.CARRYING:
-			if BricoNavigation.move_agent(self, dt, sim.worker_speed()):
+			if BricoNavigation.move_agent(self, dt, speed(sim)):
 				state = State.RESTOCKING
 				timer = 0
 		State.RESTOCKING:
-			if timer >= sim.restock_time():
+			if timer >= restock_duration(sim):
 				sim.inventory.put_shelf(family, cargo)
 				cargo = 0
 				sim.last_restock[family] = sim.elapsed

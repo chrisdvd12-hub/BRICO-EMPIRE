@@ -78,6 +78,11 @@ Les rayons indiquent leur stock et signalent les ruptures. Le panneau réserve m
 - Changements de mobilier aux niveaux 3 et 5 de capacité/valeur ; changement de caisse à partir du niveau 3.
 - Sauvegarde locale atomique avec secours, tutoriel, réglages son/effets réduits et progression hors ligne prudente.
 - Graphismes vectoriels originaux, pièces qui jaillissent à chaque vente, éclat sur le rayon amélioré, clients pressés animés.
+- Clients variés : VIP (casquette dorée, pourboire +40 %), artisans (casque, achètent 2 articles), clients pressés. Bulle d’humeur à la sortie ; la satisfaction donne une **note sur 5** qui accélère ou ralentit l’arrivée des clients.
+- **Objectif du jour** renouvelé chaque journée de jeu, **statistiques** (note, revenus par minute, meilleur jour, rayon star), **décoration** (plantes, affiches, néon, murs repeints, coin café) qui améliore la note.
+- **Franchise** : une fois les 5 rayons ouverts, ouvrir un nouvel atelier avec +15 % de ventes à vie (cumulable) ; succès et statistiques sont conservés.
+- Employés nommés avec spécialité (Rapide, Costaud, Minutieux) ; camion de livraison qui arrive par la route.
+- Volume réglable, musique de nuit en fondu, oiseaux le jour et grillons la nuit ; astuces affichées une fois pour chaque nouveauté ; **transfert de sauvegarde** par code (Options › Sauvegarde).
 - Un quartier vivant autour du magasin : parking, route avec voitures et passage piéton, passants, maisons, parc avec étang, café et boulangerie, arbres, lampadaires et fenêtres allumés la nuit. Glisser pour explorer, **Recentrer** pour revenir.
 - Sons et musique d’ambiance synthétisés (boucle Do–La m–Fa–Sol), désactivables séparément.
 
@@ -104,6 +109,11 @@ docs/                      Captures, résultats et limites
 ```
 
 Le contenu utilise des identifiants stables (`atelier_01`, `tools`, `paint`, `garden`). Un autre magasin pourra apporter ses définitions et son plan. Il n’y a pas de carte ni de système de magasins multiples prématuré.
+
+## Intégration continue
+
+- `.github/workflows/tests.yml` lance la suite de tests Godot 4.6.3 à chaque push et pull request.
+- `.github/workflows/pages.yml` publie `web/` sur GitHub Pages à chaque push sur `main`. Activation unique par le propriétaire : **Settings › Pages › Source : GitHub Actions**.
 
 ## Tests
 

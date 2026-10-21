@@ -280,12 +280,34 @@ func car(at: Vector2, color: Color, facing: int, parked := false):
 	for wx in [-20,20]:
 		draw_circle(p(at+Vector2(wx,13))+Vector2(0,-2),5,Color("23292c"))
 # ---------- Animated layer ----------
+func truck_x() -> float:
+	# Delivery truck: drives in along the road before each delivery, then leaves.
+	var t := sim.delivery_timer
+	var interval: float = sim.cfg.v("delivery_interval")
+	if t < 7.0: return lerpf(-1500,-170,clampf((7.0-t)/4.5,0,1))
+	if t > interval-4.0: return lerpf(-170,1500,clampf((interval-t)/4.0,0,1))
+	return INF
+func draw_truck(x: float, night: bool):
+	var at := Vector2(x,LANES[0])
+	ellipse(p(at)+Vector2(6,8),Vector2(60,16),Color(0,0,0,.2))
+	box(Rect2(at.x-55,at.y-16,78,32),CREAM,46,6)
+	box(Rect2(at.x+25,at.y-14,30,28),Color("f2aa56"),30,6)
+	box(Rect2(at.x+28,at.y-12,20,24),Color("a9c7d0"),10,22)
+	var side := p(Vector2(at.x-50,at.y+16))
+	draw_string(font,side+Vector2(4,-22),"BRICO",HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("e8893a"))
+	for wx in [-38,0,42]: draw_circle(p(at+Vector2(wx,16))+Vector2(0,-3),6,Color("23292c"))
+	if night:
+		var front := p(at+Vector2(56,0))+Vector2(0,-12)
+		draw_circle(front,4,Color(1,.95,.7))
+		draw_colored_polygon(PackedVector2Array([front,front+Vector2(100,-18),front+Vector2(100,20)]),Color(1,.95,.7,.18))
 func draw_animated():
 	var night := is_night()
 	for w in walkers:
 		if w.side == 0: walker(w)
 	for c in cars:
 		if c.lane == 0: moving_car(c,night)
+	var tx := truck_x()
+	if tx != INF: draw_truck(tx,night)
 	for c in cars:
 		if c.lane == 1: moving_car(c,night)
 	for w in walkers:
