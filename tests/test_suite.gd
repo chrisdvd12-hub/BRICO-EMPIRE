@@ -23,6 +23,9 @@ func run_all():
 	test_save()
 	test_tutorial()
 	test_navigation()
+	test_new_families()
+	test_events()
+	test_achievements()
 	print("RESULT: %d assertions, %d failures" % [checks,failures])
 	quit(1 if failures else 0)
 func test_loop():
@@ -30,7 +33,7 @@ func test_loop():
 	var initial := s.money
 	run_for(s,180)
 	expect(s.total_sales > 15,"end-to-end customers pay")
-	expect(s.money == initial+s.total_revenue,"only settlements create revenue")
+	expect(s.money == initial+s.total_revenue+s.achievement_rewards,"only settlements and achievement rewards create money")
 	expect(s.restock_count > 0,"workers actually restock")
 	expect(s.inventory.delivered > 32,"delivery adds goods")
 	expect(s.stock_audit() == 0,"conservation includes reserve shelf cargo baskets and sold goods")
@@ -178,3 +181,51 @@ func test_navigation():
 	c.pos = Vector2(170,410) # deliberately invalid starting cell
 	c.leave(s)
 	expect(c.state == BricoCustomer.State.DONE,"invalid route controlled recovery")
+func test_new_families():
+	var s := BricoSimulation.new(12)
+	s.money = 100000
+	expect(not s.progression.buy("unlock","electric"),"electricity requires the large depot")
+	for action in [["unlock","paint"],["expand",""],["unlock","garden"],["expand",""]]: s.progression.buy(action[0],action[1])
+	expect(s.progression.buy("unlock","electric") and s.progression.buy("unlock","plumbing"),"new families unlock after depot")
+	run_for(s,40)
+	run_for(s,400)
+	expect(s.last_restock.electric > 0 and s.last_restock.plumbing > 0,"new families are restocked")
+	expect(s.stock_audit() == 0,"new families preserve inventory")
+	var r := BricoSimulation.new(1); r.restore(s.snapshot(1000))
+	expect(r.opened.electric and r.opened.plumbing,"new families restored")
+	var legacy := s.snapshot(1000); legacy.opened.erase("electric"); legacy.opened.erase("plumbing")
+	r = BricoSimulation.new(1); r.restore(legacy)
+	expect(not r.opened.electric and r.slots.has("plumbing"),"older saves load with new families closed")
+func test_events():
+	var s := BricoSimulation.new(31)
+	var started: Array = []
+	s.event_started.connect(func(e): started.append(e.id))
+	run_for(s,s.cfg.v("event_first")+1)
+	expect(started.size() == 1 and not s.event.is_empty(),"first event starts on schedule")
+	var duration: float = s.event.duration
+	s.event = s.cfg.v("events")[1]; s.event_left = duration
+	expect(is_equal_approx(s.value_multiplier(),1.5),"promo raises sale value")
+	run_for(s,duration+1)
+	expect(s.event.is_empty() and is_equal_approx(s.value_multiplier(),1.0),"event ends and bonus stops")
+	s.event = s.cfg.v("events")[0]; s.event_left = 10
+	s.spawn_customer()
+	expect(s.customers[-1].hurried and s.customers[-1].speed(s) > s.cfg.v("customer_speed"),"rush brings hurried customers")
+	var r := BricoSimulation.new(1); r.restore(s.snapshot(1000))
+	expect(r.event.is_empty(),"events are not persisted")
+	expect(s.money == s.cfg.v("initial_money")+s.total_revenue+s.achievement_rewards,"event revenue is only settled sales")
+func test_achievements():
+	var s := BricoSimulation.new(8)
+	var got: Array = []
+	s.achieved.connect(func(a): got.append(a.id))
+	run_for(s,240)
+	expect(got.has("sales_10"),"sales achievement unlocks")
+	var before := s.money
+	s.check_achievements(); s.check_achievements()
+	expect(s.money == before,"achievement rewards are granted once")
+	var r := BricoSimulation.new(1); r.restore(s.snapshot(1000))
+	expect(r.achievements == s.achievements and r.achievement_rewards == s.achievement_rewards,"achievements restored")
+	r.check_achievements()
+	expect(r.money == s.money,"restored achievements do not pay again")
+	var bad := s.snapshot(1000); bad.achievements = ["unknown",42,"sales_10","sales_10"]
+	r = BricoSimulation.new(1); r.restore(bad)
+	expect(r.achievements == ["sales_10"],"invalid achievement ids filtered")

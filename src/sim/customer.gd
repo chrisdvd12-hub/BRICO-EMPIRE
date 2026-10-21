@@ -16,6 +16,7 @@ var unit_value := 0
 var appearance := 0
 var failures := 0
 var queue_target := Vector2.INF
+var hurried := false
 func _init(number: int, entrance: Vector2):
 	id = number
 	pos = entrance + Vector2((number % 3 - 1) * 12, 0)
@@ -26,6 +27,8 @@ func go(sim, target: Vector2) -> bool:
 		failures += 1
 		return false
 	return true
+func speed(sim) -> float:
+	return sim.cfg.v("customer_speed") * (sim.cfg.v("hurried_speed") if hurried else 1.0)
 func release_slot(sim):
 	if slot >= 0:
 		sim.slots[family][slot] = -1
@@ -54,7 +57,7 @@ func tick(sim, dt: float):
 			timer = 0
 			go(sim, Vector2(290 + (id % 4) * 22, 560 + (id % 3) * 25))
 		State.WAITING_SLOT:
-			BricoNavigation.move_agent(self, dt, sim.cfg.v("customer_speed"))
+			BricoNavigation.move_agent(self, dt, speed(sim))
 			for i in range(2):
 				if sim.slots[family][i] == -1:
 					slot = i
@@ -65,7 +68,7 @@ func tick(sim, dt: float):
 					return
 			if timer > sim.cfg.v("slot_patience"): leave(sim)
 		State.WALKING_SHELF:
-			if BricoNavigation.move_agent(self, dt, sim.cfg.v("customer_speed")):
+			if BricoNavigation.move_agent(self, dt, speed(sim)):
 				state = State.WAITING_STOCK
 				timer = 0
 		State.WAITING_STOCK:
@@ -79,7 +82,7 @@ func tick(sim, dt: float):
 			if timer >= sim.pick_time(family):
 				if sim.inventory.pick(family):
 					carrying = true
-					unit_value = sim.sale_value(family)
+					unit_value = int(round(sim.sale_value(family) * sim.value_multiplier()))
 					release_slot(sim)
 					state = State.CHOOSING_CHECKOUT
 				else:
@@ -98,7 +101,7 @@ func tick(sim, dt: float):
 				if not go(sim, target):
 					# Keep a taken product; controlled recovery to the legal queue point.
 					pos = target
-			var arrived := BricoNavigation.move_agent(self, dt, sim.cfg.v("customer_speed"))
+			var arrived := BricoNavigation.move_agent(self, dt, speed(sim))
 			if index == 0 and arrived:
 				state = State.PAYING
 				timer = 0
@@ -109,6 +112,6 @@ func tick(sim, dt: float):
 				carrying = false
 				leave(sim)
 		State.LEAVING:
-			if BricoNavigation.move_agent(self, dt, sim.cfg.v("customer_speed")): state = State.DONE
+			if BricoNavigation.move_agent(self, dt, speed(sim)): state = State.DONE
 	# No customer can stay indefinitely due to a navigation failure before taking a product.
 	if age > 180 and not carrying and state != State.LEAVING: leave(sim)

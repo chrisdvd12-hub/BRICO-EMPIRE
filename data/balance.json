@@ -124,8 +124,190 @@
         350,
         230
       ]
+    },
+    {
+      "id": "electric",
+      "name": "Électricité",
+      "price": 40,
+      "unlock": 2600,
+      "expansion": 2,
+      "color": "f2d45c",
+      "rect": [
+        160,
+        30,
+        100,
+        70
+      ],
+      "customer": [
+        [
+          190,
+          120
+        ],
+        [
+          230,
+          120
+        ]
+      ],
+      "worker": [
+        140,
+        65
+      ]
+    },
+    {
+      "id": "plumbing",
+      "name": "Plomberie",
+      "price": 55,
+      "unlock": 4200,
+      "expansion": 2,
+      "color": "6fa8d6",
+      "rect": [
+        370,
+        30,
+        100,
+        70
+      ],
+      "customer": [
+        [
+          390,
+          120
+        ],
+        [
+          430,
+          120
+        ]
+      ],
+      "worker": [
+        350,
+        65
+      ]
     }
   ],
   "expansion_shelf_bonus": 4,
-  "loading_seconds": 0.6
+  "loading_seconds": 0.6,
+  "event_first": 120.0,
+  "event_interval": [
+    150.0,
+    240.0
+  ],
+  "hurried_speed": 1.35,
+  "events": [
+    {
+      "id": "rush",
+      "name": "Heure de pointe",
+      "text": "Des clients pressés arrivent deux fois plus vite !",
+      "duration": 30.0,
+      "arrival": 0.5,
+      "value": 1.0,
+      "hurried": true
+    },
+    {
+      "id": "promo",
+      "name": "Journée bricolage",
+      "text": "Chaque vente rapporte 50 % de plus !",
+      "duration": 30.0,
+      "arrival": 1.0,
+      "value": 1.5,
+      "hurried": false
+    },
+    {
+      "id": "buzz",
+      "name": "Le quartier en parle",
+      "text": "Plus de clients et ventes +25 % !",
+      "duration": 25.0,
+      "arrival": 0.7,
+      "value": 1.25,
+      "hurried": false
+    }
+  ],
+  "day_seconds": 300.0,
+  "achievements": [
+    {
+      "id": "sales_10",
+      "name": "Premiers clients",
+      "text": "Encaisser 10 ventes",
+      "stat": "sales",
+      "goal": 10,
+      "reward": 60
+    },
+    {
+      "id": "revenue_1000",
+      "name": "Premier millier",
+      "text": "Encaisser 1 000 pièces au total",
+      "stat": "revenue",
+      "goal": 1000,
+      "reward": 150
+    },
+    {
+      "id": "sales_100",
+      "name": "Commerce florissant",
+      "text": "Encaisser 100 ventes",
+      "stat": "sales",
+      "goal": 100,
+      "reward": 300
+    },
+    {
+      "id": "families_3",
+      "name": "Trois rayons",
+      "text": "Ouvrir 3 rayons",
+      "stat": "families",
+      "goal": 3,
+      "reward": 250
+    },
+    {
+      "id": "team_3",
+      "name": "Équipe complète",
+      "text": "Recruter 3 employés",
+      "stat": "workers",
+      "goal": 3,
+      "reward": 400
+    },
+    {
+      "id": "events_3",
+      "name": "Toujours prêt",
+      "text": "Vivre 3 événements",
+      "stat": "events",
+      "goal": 3,
+      "reward": 300
+    },
+    {
+      "id": "level_5",
+      "name": "Perfectionniste",
+      "text": "Monter une amélioration au niveau 5",
+      "stat": "max_level",
+      "goal": 5,
+      "reward": 500
+    },
+    {
+      "id": "sales_500",
+      "name": "Pilier du quartier",
+      "text": "Encaisser 500 ventes",
+      "stat": "sales",
+      "goal": 500,
+      "reward": 1200
+    },
+    {
+      "id": "revenue_10000",
+      "name": "Coffre bien rempli",
+      "text": "Encaisser 10 000 pièces au total",
+      "stat": "revenue",
+      "goal": 10000,
+      "reward": 1000
+    },
+    {
+      "id": "families_5",
+      "name": "Tout pour la maison",
+      "text": "Ouvrir les 5 rayons",
+      "stat": "families",
+      "goal": 5,
+      "reward": 2500
+    },
+    {
+      "id": "sales_2000",
+      "name": "Brico Empire",
+      "text": "Encaisser 2 000 ventes",
+      "stat": "sales",
+      "goal": 2000,
+      "reward": 4000
+    }
+  ]
 }

@@ -11,162 +11,162 @@
   ],
   "results": [
     {
-      "cpu_ms": 1047,
+      "cpu_ms": 1035,
       "empty_departures": 0,
       "milestones_minutes": [
         0.0,
-        1.57,
-        4.04,
-        10.43,
-        13.91,
-        17.12,
-        25.45
+        1.14,
+        3.28,
+        8.08,
+        9.56,
+        11.26,
+        19.29
       ],
-      "sales": 303,
+      "sales": 239,
       "seed": 1,
       "stock_audit": 0
     },
     {
-      "cpu_ms": 1130,
+      "cpu_ms": 982,
       "empty_departures": 1,
       "milestones_minutes": [
         0.0,
-        1.54,
-        4.09,
-        10.62,
-        13.95,
-        17.66,
-        25.9
+        1.12,
+        3.58,
+        8.35,
+        9.42,
+        11.55,
+        18.95
       ],
-      "sales": 308,
+      "sales": 236,
       "seed": 2,
       "stock_audit": 0
     },
     {
-      "cpu_ms": 1335,
-      "empty_departures": 2,
+      "cpu_ms": 983,
+      "empty_departures": 0,
       "milestones_minutes": [
         0.0,
-        1.59,
-        4.06,
-        10.67,
-        14.02,
-        17.57,
-        25.93
+        1.19,
+        3.43,
+        8.4,
+        9.3,
+        11.22,
+        19.3
       ],
-      "sales": 308,
+      "sales": 235,
       "seed": 3,
       "stock_audit": 0
     },
     {
-      "cpu_ms": 1376,
+      "cpu_ms": 926,
       "empty_departures": 0,
       "milestones_minutes": [
         0.0,
-        1.6,
-        4.07,
-        10.36,
-        14.01,
-        17.34,
-        25.78
+        1.16,
+        3.66,
+        8.51,
+        9.51,
+        11.76,
+        18.89
       ],
-      "sales": 306,
+      "sales": 235,
       "seed": 4,
       "stock_audit": 0
     },
     {
-      "cpu_ms": 1104,
+      "cpu_ms": 965,
       "empty_departures": 0,
       "milestones_minutes": [
         0.0,
-        1.61,
-        4.1,
-        10.68,
-        14.24,
-        17.62,
-        25.79
+        1.19,
+        3.36,
+        8.27,
+        9.08,
+        11.68,
+        19.39
       ],
-      "sales": 302,
+      "sales": 239,
       "seed": 5,
       "stock_audit": 0
     },
     {
-      "cpu_ms": 1003,
+      "cpu_ms": 934,
       "empty_departures": 0,
       "milestones_minutes": [
         0.0,
-        1.61,
-        4.07,
-        10.57,
-        13.92,
-        17.46,
-        26.15
+        1.2,
+        3.31,
+        8.4,
+        8.94,
+        11.27,
+        19.26
       ],
-      "sales": 311,
+      "sales": 233,
       "seed": 6,
       "stock_audit": 0
     },
     {
-      "cpu_ms": 1007,
+      "cpu_ms": 970,
       "empty_departures": 0,
       "milestones_minutes": [
         0.0,
-        1.56,
-        3.97,
-        10.5,
-        13.93,
-        17.37,
-        25.88
+        1.17,
+        3.27,
+        8.44,
+        9.9,
+        11.27,
+        19.42
       ],
-      "sales": 308,
+      "sales": 232,
       "seed": 7,
       "stock_audit": 0
     },
     {
-      "cpu_ms": 944,
+      "cpu_ms": 1021,
       "empty_departures": 0,
       "milestones_minutes": [
         0.0,
-        1.58,
-        4.0,
-        10.19,
-        13.4,
-        16.9,
-        25.01
+        1.17,
+        3.31,
+        8.04,
+        9.59,
+        10.71,
+        18.82
       ],
-      "sales": 296,
+      "sales": 236,
       "seed": 8,
       "stock_audit": 0
     },
     {
-      "cpu_ms": 946,
-      "empty_departures": 1,
+      "cpu_ms": 1058,
+      "empty_departures": 0,
       "milestones_minutes": [
         0.0,
-        1.59,
-        4.08,
-        10.61,
-        14.05,
-        17.53,
-        26.29
+        1.15,
+        3.42,
+        8.09,
+        9.54,
+        11.53,
+        19.01
       ],
-      "sales": 310,
+      "sales": 241,
       "seed": 9,
       "stock_audit": 0
     },
     {
-      "cpu_ms": 935,
+      "cpu_ms": 1741,
       "empty_departures": 0,
       "milestones_minutes": [
         0.0,
-        1.59,
-        3.97,
-        10.37,
-        13.86,
-        17.4,
-        25.17
+        1.19,
+        3.16,
+        8.22,
+        10.54,
+        11.49,
+        18.92
       ],
-      "sales": 298,
+      "sales": 232,
       "seed": 10,
       "stock_audit": 0
     }

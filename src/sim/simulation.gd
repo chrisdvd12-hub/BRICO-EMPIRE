@@ -3,13 +3,16 @@ extends RefCounted
 signal changed
 signal purchased(action: String, target: String)
 signal sale(amount: int, position: Vector2)
+signal event_started(event: Dictionary)
+signal event_ended(event: Dictionary)
+signal achieved(achievement: Dictionary)
 var cfg := BricoConfig.new()
 var inventory: BricoInventory
 var nav := BricoNavigation.new()
 var progression: BricoProgression
 var rng := RandomNumberGenerator.new()
 var money := 200
-var opened := {"tools":true,"paint":false,"garden":false}
+var opened: Dictionary = {}
 var levels: Dictionary = {}
 var worker_levels := {"speed":1,"carry":1,"restock":1}
 var cash_levels := [1,1]
@@ -18,9 +21,9 @@ var checkouts := 1
 var workers: Array = []
 var customers: Array = []
 var queues := [[],[]]
-var slots := {"tools":[-1,-1],"paint":[-1,-1],"garden":[-1,-1]}
+var slots: Dictionary = {}
 var tasks: Dictionary = {}
-var last_restock := {"tools":0.0,"paint":0.0,"garden":0.0}
+var last_restock: Dictionary = {}
 var elapsed := 0.0
 var arrival_timer := 5.0
 var delivery_timer := 20.0
@@ -31,14 +34,27 @@ var next_id := 0
 var sales: Array = []
 var total_sales := 0
 var total_revenue := 0
-var settings := {"sound":true,"reduced_effects":false}
+var settings := {"sound":true,"music":true,"reduced_effects":false}
 var observed := {"empty":0.0,"queue":0.0,"goods":0.0}
 var advice := "Les clients font leurs achats seuls. Observez le magasin."
 var advice_timer := 20.0
+# Temporary store events; transient, never saved, so a reload cannot extend a bonus.
+var event: Dictionary = {}
+var event_left := 0.0
+var event_timer := 0.0
+var events_seen := 0
+var achievements: Array = []
+var achievement_rewards := 0
+var achievement_timer := 1.0
 func _init(seed_value: int = 0):
 	if seed_value == 0: rng.randomize()
 	else: rng.seed = seed_value
 	money = cfg.v("initial_money")
+	for f in cfg.families:
+		opened[f.id] = f.id == "tools"
+		slots[f.id] = [-1,-1]
+		last_restock[f.id] = 0.0
+	event_timer = cfg.v("event_first")
 	inventory = BricoInventory.new(cfg)
 	for f in cfg.families: levels[f.id] = {"capacity":1,"value":1,"service":1}
 	inventory.shelves.tools = cfg.v("shelf_capacity")
@@ -70,8 +86,63 @@ func shortest_queue() -> int:
 	return queues[choose_checkout()].size()
 func spawn_customer():
 	if customers.size() >= cfg.v("max_clients"): return
-	customers.append(BricoCustomer.new(next_id,nav.entrance))
+	var c := BricoCustomer.new(next_id,nav.entrance)
+	c.hurried = bool(event.get("hurried",false))
+	customers.append(c)
 	next_id += 1
+func value_multiplier() -> float:
+	return float(event.get("value",1.0))
+func arrival_multiplier() -> float:
+	return float(event.get("arrival",1.0))
+func update_event(dt: float):
+	if event.is_empty():
+		event_timer -= dt
+		if event_timer <= 0:
+			var list: Array = cfg.v("events")
+			event = list[rng.randi_range(0,list.size()-1)]
+			event_left = event.duration
+			events_seen += 1
+			event_started.emit(event)
+	else:
+		event_left -= dt
+		if event_left <= 0:
+			var finished := event
+			event = {}
+			var interval: Array = cfg.v("event_interval")
+			event_timer = rng.randf_range(interval[0],interval[1])
+			event_ended.emit(finished)
+func stat(name: String) -> int:
+	match name:
+		"sales": return total_sales
+		"revenue": return total_revenue
+		"workers": return workers.size()
+		"events": return events_seen
+		"families":
+			var n := 0
+			for id in opened:
+				if opened[id]: n += 1
+			return n
+		"max_level":
+			var best := 1
+			for id in levels:
+				if opened[id]:
+					for key in levels[id]: best = maxi(best,levels[id][key])
+			for key in worker_levels: best = maxi(best,worker_levels[key])
+			for i in range(checkouts): best = maxi(best,cash_levels[i])
+			return best
+	return 0
+func check_achievements():
+	for a in cfg.v("achievements"):
+		if achievements.has(a.id) or stat(a.stat) < a.goal: continue
+		achievements.append(a.id)
+		money += int(a.reward)
+		achievement_rewards += int(a.reward)
+		achieved.emit(a)
+# Hour of the in-game day (0-24), purely cosmetic and derived from saved elapsed time.
+func day_hour() -> float:
+	return fmod(8.0 + elapsed / cfg.v("day_seconds") * 24.0, 24.0)
+func day_number() -> int:
+	return int((elapsed / cfg.v("day_seconds") * 24.0 + 8.0) / 24.0) + 1
 func record_sale(customer: BricoCustomer):
 	money += customer.unit_value
 	inventory.sold += 1
@@ -86,10 +157,15 @@ func tick(dt: float):
 	delivery_timer -= dt
 	if arrival_timer <= 0:
 		spawn_customer()
-		arrival_timer += rng.randf_range(cfg.v("arrival_min"),cfg.v("arrival_max"))
+		arrival_timer += rng.randf_range(cfg.v("arrival_min"),cfg.v("arrival_max")) * arrival_multiplier()
 	if delivery_timer <= 0:
 		inventory.deliver(opened,reserve_capacity())
 		delivery_timer += cfg.v("delivery_interval")
+	update_event(dt)
+	achievement_timer -= dt
+	if achievement_timer <= 0:
+		achievement_timer = 1.0
+		check_achievements()
 	for worker in workers: worker.tick(self,dt)
 	for c in customers: c.tick(self,dt)
 	customers = customers.filter(func(c): return c.state != BricoCustomer.State.DONE)
@@ -132,7 +208,7 @@ func snapshot(now: int) -> Dictionary:
 		if w.cargo > 0: reserves[w.family] += w.cargo
 	for c in customers:
 		if c.carrying: reserves[c.family] += 1
-	return {"version":2,"store_id":cfg.v("store_id"),"money":money,"opened":opened.duplicate(true),"levels":levels.duplicate(true),"worker_levels":worker_levels.duplicate(true),"cash_levels":cash_levels.duplicate(),"worker_count":workers.size(),"expansion":expansion,"checkouts":checkouts,"shelves":inventory.shelves.duplicate(true),"reserve":reserves,"tutorial":tutorial,"settings":settings.duplicate(true),"elapsed":elapsed,"sales":sales.duplicate(true),"total_sales":total_sales,"total_revenue":total_revenue,"last_saved":now,"delivery_timer":delivery_timer,"observed_rate":recent_stats()}
+	return {"version":2,"store_id":cfg.v("store_id"),"money":money,"opened":opened.duplicate(true),"levels":levels.duplicate(true),"worker_levels":worker_levels.duplicate(true),"cash_levels":cash_levels.duplicate(),"worker_count":workers.size(),"expansion":expansion,"checkouts":checkouts,"shelves":inventory.shelves.duplicate(true),"reserve":reserves,"tutorial":tutorial,"settings":settings.duplicate(true),"elapsed":elapsed,"sales":sales.duplicate(true),"total_sales":total_sales,"total_revenue":total_revenue,"achievements":achievements.duplicate(),"achievement_rewards":achievement_rewards,"events_seen":events_seen,"last_saved":now,"delivery_timer":delivery_timer,"observed_rate":recent_stats()}
 func restore(data: Dictionary):
 	money = maxi(0,int(data.get("money",cfg.v("initial_money"))))
 	expansion = clampi(int(data.get("expansion",0)),0,2)
@@ -156,6 +232,14 @@ func restore(data: Dictionary):
 		if s is Array and s.size() == 2 and s[0] is float and s[1] >= 0: sales.append(s)
 	total_sales = maxi(0,int(data.get("total_sales",0)))
 	total_revenue = maxi(0,int(data.get("total_revenue",0)))
+	achievements = []
+	var known: Array = cfg.v("achievements").map(func(a): return a.id)
+	var saved_achievements = data.get("achievements",[])
+	if saved_achievements is Array:
+		for id in saved_achievements:
+			if id is String and known.has(id) and not achievements.has(id): achievements.append(id)
+	achievement_rewards = maxi(0,int(data.get("achievement_rewards",0)))
+	events_seen = maxi(0,int(data.get("events_seen",0)))
 	delivery_timer = clampf(float(data.get("delivery_timer",20)),0.1,cfg.v("delivery_interval"))
 	inventory.delivered = inventory.total()
 	inventory.sold = 0

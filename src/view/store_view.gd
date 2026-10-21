@@ -15,17 +15,24 @@ var held := false
 var fingers: Dictionary = {}
 var pinch_distance := 0.0
 var purchase_flash := 0.0
+var coins: Array = []
+var shelf_flash := {}
+var daylight: CanvasModulate
 const INK := Color("174956")
 const CREAM := Color("fff4df")
 const ORANGE := Color("f2aa56")
 func setup(simulation: BricoSimulation):
 	sim = simulation
 	recenter()
+	daylight = CanvasModulate.new(); add_child(daylight)
 	sim.sale.connect(func(n,p):
 		if effects.size() < sim.cfg.v("effect_limit"): effects.append({"p":p,"text":"+%d" % n,"time":0.0})
+		if not sim.settings.reduced_effects and coins.size() < 30:
+			for i in range(3): coins.append({"p":p+Vector2(0,-40),"v":Vector2(randf_range(-60,60),randf_range(-190,-130)),"time":0.0})
 	)
-	sim.purchased.connect(func(action,_target):
+	sim.purchased.connect(func(action,target):
 		purchase_flash = 1.0
+		if not target.is_empty() and not sim.cfg.family(target).is_empty(): shelf_flash[target] = 1.0
 		if action == "expand": recenter())
 func p(v: Vector2) -> Vector2:
 	return Vector2(v.x + v.y * 0.17,v.y * 0.9)
@@ -37,6 +44,13 @@ func _process(dt: float):
 	purchase_flash = maxf(0,purchase_flash-dt)
 	for e in effects: e.time += dt
 	effects = effects.filter(func(e): return e.time < 1.5)
+	for c in coins:
+		c.time += dt; c.v.y += 420*dt; c.p += c.v*dt
+	coins = coins.filter(func(c): return c.time < 0.9)
+	for id in shelf_flash.keys():
+		shelf_flash[id] -= dt
+		if shelf_flash[id] <= 0: shelf_flash.erase(id)
+	daylight.color = daylight_color()
 	position = camera_offset
 	scale = Vector2.ONE * camera_zoom
 	queue_redraw()
@@ -94,6 +108,25 @@ func product(at: Vector2, kind: String, shade: Color, variant: int):
 				round_rect(q+Vector2(-10,-20),Vector2(21,12),shade,3)
 				draw_line(q+Vector2(-2,-9),q+Vector2(-2,1),INK,7)
 				draw_line(q+Vector2(11,-15),q+Vector2(19,-15),Color("a8b5ae"),3)
+		"electric":
+			if variant % 2 == 0:
+				draw_circle(q+Vector2(0,-15),8,shade.lightened(.25))
+				draw_circle(q+Vector2(-2,-17),3,Color(1,1,1,.7))
+				round_rect(q+Vector2(-4,-8),Vector2(8,8),Color("a8b5ae"),2)
+			else:
+				draw_circle(q+Vector2(0,-10),10,Color("d9634c"))
+				draw_circle(q+Vector2(0,-10),4,INK)
+				draw_arc(q+Vector2(0,-10),7,0,TAU,16,Color("f08a6c"),2,true)
+		"plumbing":
+			if variant % 2 == 0:
+				draw_line(q+Vector2(-9,-4),q+Vector2(-9,-18),shade,6,true)
+				draw_line(q+Vector2(-9,-18),q+Vector2(9,-18),shade,6,true)
+				draw_circle(q+Vector2(-9,-18),4,shade.darkened(.2))
+			else:
+				round_rect(q+Vector2(-8,-22),Vector2(16,7),Color("c6cfd3"),3)
+				draw_line(q+Vector2(0,-16),q+Vector2(0,-6),Color("c6cfd3"),5)
+				draw_line(q+Vector2(0,-6),q+Vector2(8,-6),Color("c6cfd3"),5)
+				draw_circle(q+Vector2(9,-1),2.5,shade)
 func ellipse_shape(center: Vector2, radii: Vector2, color: Color):
 	var points := PackedVector2Array()
 	for i in range(24): points.append(center+Vector2(cos(i*TAU/24)*radii.x,sin(i*TAU/24)*radii.y))
@@ -121,6 +154,13 @@ func shelf(f: Dictionary):
 	var label := p(r.position+Vector2(-5,r.size.y+19))
 	round_rect(label+Vector2(-4,-18),Vector2(126,26),CREAM,7)
 	draw_string(font,label+Vector2(2,1),"%s · %d/%d" % [f.name,sim.inventory.shelves[f.id],sim.capacity(f.id)],HORIZONTAL_ALIGNMENT_LEFT,-1,15,INK)
+	if shelf_flash.has(f.id) and not sim.settings.reduced_effects:
+		var k: float = shelf_flash[f.id]
+		var center := p(r.get_center())+Vector2(0,-30)
+		draw_arc(center,40+(1-k)*45,0,TAU,32,Color(1,.85,.35,k),4,true)
+		for i in range(6):
+			var a := i*TAU/6+phase*2
+			draw_circle(center+Vector2(cos(a),sin(a))*(30+(1-k)*60),4*k,Color("ffe08a"))
 	if sim.inventory.shelves[f.id] <= 2:
 		round_rect(label+Vector2(-4,12),Vector2(126,24),Color("f5c786"),5)
 		draw_string(font,label+Vector2(3,29),"VIDE" if sim.inventory.shelves[f.id] == 0 else "STOCK FAIBLE",HORIZONTAL_ALIGNMENT_LEFT,-1,13,INK)
@@ -147,6 +187,8 @@ func character(agent, worker: bool):
 		draw_rect(Rect2(q+Vector2(-6,-23),Vector2(12,14)),INK)
 	else:
 		draw_arc(q+Vector2(0,-39),9,PI,TAU,12,INK.lightened(.05),4,true)
+	if not worker and agent.hurried and moving and not sim.settings.reduced_effects:
+		for i in range(3): draw_line(q+Vector2(-14,-34+i*9)-agent.direction*4,q+Vector2(-14,-34+i*9)-agent.direction*16,Color(1,1,1,.75),2,true)
 	if (worker and agent.cargo > 0) or (not worker and agent.carrying):
 		round_rect(q+Vector2(-9,-22),Vector2(21,16),Color("cda16d"),2)
 		draw_line(q+Vector2(1,-22),q+Vector2(1,-6),Color("f3d2a5"),3)
@@ -217,8 +259,9 @@ func _draw():
 		box(Rect2(35,185,85,36),Color("c09364"),30)
 		text_at(Vector2(25,255),"RÉCEPTION",17)
 	if sim.expansion == 2:
-		for i in range(5): box(Rect2(40+i*66,40,50,40),Color("cfa577"),32)
-		text_at(Vector2(55,112),"GRAND DÉPÔT · 48 UNITÉS / FAMILLE",19)
+		for i in range(2): box(Rect2(30+i*62,30,50,40),Color("cfa577"),32)
+		box(Rect2(500,30,70,40),Color("cfa577"),32)
+		text_at(Vector2(28,108),"GRAND DÉPÔT",15)
 	if sim.delivery_timer < 3 and sim.expansion >= 1:
 		box(Rect2(160,170,80,45),CREAM,32)
 		text_at(Vector2(166,207),"BRICO",16)
@@ -237,6 +280,15 @@ func _draw():
 	box(Rect2(390,897,190,10),INK,20)
 	for i in range(6): box(Rect2(220+i*27,916,27,26),ORANGE if i%2 == 0 else CREAM,70)
 	text_at(Vector2(226,959),"BRICO EMPIRE",23,CREAM)
+	for c in coins:
+		var cq := p(c.p)
+		draw_circle(cq,6,Color("e3a72f",1-c.time/0.9))
+		draw_circle(cq,4,Color("ffd75e",1-c.time/0.9))
+	if not sim.event.is_empty():
+		var sign := p(Vector2(300,845))+Vector2(-95,-10)
+		var blink := 0.85+0.15*sin(phase*6) if not sim.settings.reduced_effects else 1.0
+		round_rect(sign,Vector2(190,30),Color("d9634c",blink),8)
+		draw_string(font,sign+Vector2(0,21),sim.event.name.to_upper(),HORIZONTAL_ALIGNMENT_CENTER,190,15,CREAM)
 	for e in effects:
 		var q := p(e.p)+Vector2(5,-55-e.time*28)
 		draw_string(font,q,e.text,HORIZONTAL_ALIGNMENT_LEFT,-1,27,Color(0.1,.38,.25,1-e.time/1.5))
@@ -244,6 +296,16 @@ func _draw():
 		for i in range(8):
 			var at := p(Vector2(300,550))+Vector2(cos(i*TAU/8),sin(i*TAU/8))*(1-purchase_flash)*140
 			draw_circle(at,4*purchase_flash,ORANGE)
+func daylight_color() -> Color:
+	# Soft cycle: day 7h-18h, golden dusk, blue night; reduced effects keep a lighter night.
+	var h := sim.day_hour()
+	var night := Color(.62,.7,.92) if not sim.settings.reduced_effects else Color(.85,.88,.96)
+	var dusk := Color(1,.88,.76)
+	if h >= 7 and h < 18: return Color.WHITE
+	if h >= 18 and h < 20: return Color.WHITE.lerp(dusk,(h-18)/2)
+	if h >= 20 and h < 21: return dusk.lerp(night,h-20)
+	if h >= 6 and h < 7: return night.lerp(Color.WHITE,h-6)
+	return night
 func recenter():
 	camera_offset = Vector2(-3,130)
 	camera_zoom = .69

@@ -20,7 +20,7 @@ func reason(action: String, target: String = "") -> String:
 	match action:
 		"unlock":
 			if sim.opened[target]: return "Rayon déjà ouvert"
-			if sim.expansion < sim.cfg.family(target).expansion: return "Ouvrez d’abord l’agrandissement 1"
+			if sim.expansion < sim.cfg.family(target).expansion: return "Ouvrez d’abord l’agrandissement %d" % sim.cfg.family(target).expansion
 		"expand":
 			if sim.expansion >= 2: return "Magasin entièrement agrandi"
 			if not sim.opened.paint: return "Ouvrez d’abord la peinture"
@@ -63,4 +63,8 @@ func objective() -> String:
 	if not sim.opened.garden: return "Ouvrir le jardinage · %d pièces" % sim.cfg.family("garden").unlock
 	if sim.checkouts == 1: return "Ouvrir la deuxième caisse · %d pièces" % sim.cfg.v("checkout_price")
 	if sim.expansion == 1: return "Créer le grand dépôt · %d pièces" % sim.cfg.v("expansion_prices")[1]
+	for id in ["electric","plumbing"]:
+		if not sim.opened[id]: return "Ouvrir : %s · %d pièces" % [sim.cfg.family(id).name,sim.cfg.family(id).unlock]
+	var total: int = sim.cfg.v("achievements").size()
+	if sim.achievements.size() < total: return "Succès : %d/%d débloqués" % [sim.achievements.size(),total]
 	return "Votre Brico Empire s’épanouit !"

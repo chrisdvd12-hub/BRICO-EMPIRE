@@ -57,24 +57,28 @@ godot --path .
 - Toucher / cliquer sur un rayon, une caisse, un employé, la réserve ou une aile fermée pour ouvrir son panneau.
 - Glisser pour déplacer la vue. Pincer à deux doigts, ou utiliser la molette sur ordinateur, pour zoomer. **Recentrer** adapte la vue à la surface ouverte.
 - Fermer le panneau pour retrouver la vue complète. Les panneaux ne laissent pas passer les gestes vers le magasin.
-- **Équipe** : recrutements et améliorations collectives. **Construire** : nouvelles familles, caisse et agrandissements.
+- **Équipe** : recrutements et améliorations collectives. **Construire** : nouvelles familles, caisse et agrandissements. **Succès** : objectifs récompensés et progression. **Options** : sons, musique, effets.
 - Commencer par observer une vente, puis améliorer l’outillage. Les étapes du tutoriel sont sauvegardées et le bouton **Passer** permet de le terminer immédiatement.
 
 La version navigateur utilise le même code GDScript et la même simulation ; les fichiers JavaScript de `web/` sont le lanceur du moteur, pas une réécriture du jeu.
 
-Le premier magasin contient l’outillage. Ouvrez la peinture, recrutez, ouvrez une nouvelle aile puis le jardinage. La seconde caisse comprend son caissier. Le grand dépôt double les réserves et ajoute 4 places à chaque rayon.
+Le premier magasin contient l’outillage. Ouvrez la peinture, recrutez, ouvrez une nouvelle aile puis le jardinage. La seconde caisse comprend son caissier. Le grand dépôt double les réserves, ajoute 4 places à chaque rayon et libère l’espace de l’électricité puis de la plomberie.
+
+Des événements temporaires surviennent toutes les 2 à 4 minutes : **Heure de pointe** (clients pressés, arrivées ×2), **Journée bricolage** (ventes +50 %) et **Le quartier en parle** (plus de clients, ventes +25 %). Onze **succès** rapportent des pièces une seule fois. Une journée de jeu dure 5 minutes, avec soirée dorée et nuit bleutée.
 
 Les rayons indiquent leur stock et signalent les ruptures. Le panneau réserve montre les capacités par famille et la prochaine livraison. Le conseil contextuel s’appuie sur les 20 dernières secondes d’activité. Le revenu par minute est mesuré sur les encaissements récents, jamais un rendement théorique.
 
 ## Contenu de cette version
 
-- Trois familles originales : outillage, peinture, jardinage ; deux agrandissements visibles du même magasin.
+- Cinq familles originales : outillage, peinture, jardinage, électricité, plomberie ; deux agrandissements visibles du même magasin.
+- Trois événements temporaires, onze succès récompensés avec panneau de progression, cycle jour/nuit cosmétique.
 - Chaîne effective : livraison gratuite → réserve dédiée par famille → employé avec carton → rayon → produit pris → file de caisse → paiement.
 - Machines à états distinctes pour clients et employés, tâches réservées, deux points d’achat par rayon, files ordonnées et limite de 20 clients.
 - Améliorations de capacité, valeur et service des rayons ; déplacement, transport et réassort de l’équipe ; encaissement. Cinq niveaux maximum.
 - Changements de mobilier aux niveaux 3 et 5 de capacité/valeur ; changement de caisse à partir du niveau 3.
 - Sauvegarde locale atomique avec secours, tutoriel, réglages son/effets réduits et progression hors ligne prudente.
-- Graphismes vectoriels originaux et sons synthétisés. Aucune musique dans cette version.
+- Graphismes vectoriels originaux, pièces qui jaillissent à chaque vente, éclat sur le rayon amélioré, clients pressés animés.
+- Sons et musique d’ambiance synthétisés (boucle Do–La m–Fa–Sol), désactivables séparément.
 
 ![Magasin agrandi](docs/03-magasin-agrandi.png)
 

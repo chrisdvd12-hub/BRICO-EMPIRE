@@ -40,3 +40,13 @@ Les limitations précises et le périmètre des tests exécutés sont dans VERIF
 Le propriétaire a demandé ensuite une version iPadOS testable **ou** un site web, avec tous les codes sur le dépôt GitHub. L’alternative choisie est l’export WebAssembly officiel du projet Godot, sans réécrire le jeu. Les modèles web officiels ont été récupérés, l’export est fourni dans `web/` et les scripts de reproduction/serveur de test dans `tools/`. Le moteur WASM est compressé (environ 9,4 Mo), avec ses licences.
 
 Le test navigateur utilise Playwright/Chromium et des captures OCR pour vérifier argent initial → ventes réelles → rechargement, et un panneau ouvert. Aucun test Safari réel ni export iPadOS signé. Une publication HTTPS reste distincte de la fabrication de l’export ; respecter la consigne initiale du propriétaire de ne pas publier sans accord.
+
+
+## Améliorations — 21 octobre 2026
+
+- Familles **Électricité** (2 600 pièces, 40/vente) et **Plomberie** (4 200 pièces, 55/vente) dans l’espace du grand dépôt ; dictionnaires de rayons générés depuis `balance.json`, anciennes sauvegardes compatibles (rayons fermés).
+- Événements temporaires (`events` dans `balance.json`), non sauvegardés : un rechargement ne prolonge jamais un bonus. Les revenus restent uniquement des encaissements.
+- Succès (`achievements`) : récompense versée une fois, identifiants sauvegardés et filtrés au chargement ; `achievement_rewards` comptabilise l’argent hors ventes.
+- Cycle jour/nuit (`CanvasModulate`, 5 min par jour), horloge dans l’en-tête, panneau Succès, bouton Options, toasts sur fond sombre, musique d’ambiance générée au démarrage.
+- Tests : 6 145 assertions, 0 échec ; `ui_smoke.gd` 0 échec ; équilibrage relancé : agrandissement 1 vers 8,1–8,5 min (contre 10,2–10,7), grand dépôt vers 18,8–19,4 min (contre 25–26,3), grâce aux récompenses et événements.
+- Export web reconstruit avec Godot 4.6.3 officiel (macOS) et modèles `web_nothreads` 4.6.3.
