@@ -77,3 +77,14 @@ Le test `tests/test_web.py` ouvre une vraie page, capture les ventes et le panne
 Les flèches mal rendues par la police embarquée web ont été remplacées par le mot « à ». Les captures 06 à 09 montrent l’exécution navigateur et son rechargement. Le test ne couvre pas Safari réel ni la persistance après suppression des données du site. Le serveur Python fourni est local ; un accès sur iPad depuis un lien nécessite une publication HTTPS distincte.
 
 Résultat final du test navigateur : **200 pièces au départ → 240 après ventes → 250 après rechargement, zéro erreur JavaScript**. Données brutes : [web-results.json](web-results.json). Le supplément après rechargement correspond à de nouvelles ventes automatiques pendant les six secondes de vérification, pas à un crédit hors ligne (absence trop courte).
+
+
+## Version enrichie intégrée après le travail du collègue
+
+Nouvelle suite exécutée : **6 196 assertions, 0 échec**, couvrant notamment les clients à deux articles, VIP, satisfaction, objectifs du jour, décorations, franchises et la reprise d’une sauvegarde de la première version. Les nouvelles familles sont Électricité et Plomberie. La sauvegarde d’origine conservait argent, marchandises, améliorations, agrandissements et tutoriel ; la simulation reprenait ensuite les ventes.
+
+Le test UI exécute aussi six ouvertures/fermetures du panneau Statistiques sans accumulation de nœuds orphelins. Des corrections ciblées empêchent la réutilisation de l’ancien rendement hors ligne après une franchise et arrêtent explicitement les lecteurs audio à la sortie. Le paquet web est reconstruit et vérifié avec `tools/check_web_export.py`. Les résultats navigateur de cette intégration sont dans `web-results.json` ; les captures 06 à 09 représentent la nouvelle interface.
+
+Les mesures de progression de la première version décrites plus haut restent des résultats historiques. L’économie, les récompenses et le périmètre ont évolué dans la branche du collègue : ne pas reprendre ces durées comme mesures de la version enrichie. Le rendu de test Linux utilise un GPU logiciel et n’est pas une mesure de fluidité sur iPad. Aucun appareil iOS/Android réel n’a été testé lors de cette intégration.
+
+Le bilan de cette intégration, ses limites et les résultats bruts sont détaillés dans [INTEGRATION.md](INTEGRATION.md).

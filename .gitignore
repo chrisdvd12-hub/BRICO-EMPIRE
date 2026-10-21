@@ -13,3 +13,7 @@ build/*
 web/game.wasm
 !web/game.pck
 !dist/brico-empire.pck
+
+# Import metadata for generated exports and QA screenshots.
+docs/*.import
+web/*.import

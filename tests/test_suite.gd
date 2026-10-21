@@ -31,6 +31,7 @@ func run_all():
 	test_decor_franchise()
 	test_workers_traits()
 	test_new_save_fields()
+	test_legacy_release_save()
 	print("RESULT: %d assertions, %d failures" % [checks,failures])
 	quit(1 if failures else 0)
 func test_loop():
@@ -77,10 +78,12 @@ func test_queue():
 	var maximum := 0
 	var previous_paid := -1
 	var paid_ids: Array = []
+	var weak_sim: WeakRef = weakref(s)
 	s.sale.connect(func(_amount,_position):
-		for c in s.customers:
+		var live_sim: BricoSimulation = weak_sim.get_ref()
+		for c in live_sim.customers:
 			if c.state == BricoCustomer.State.PAYING:
-				expect(s.queues[0][0] == c.id,"FIFO service only first customer pays")
+				expect(live_sim.queues[0][0] == c.id,"FIFO service only first customer pays")
 				expect(not paid_ids.has(c.id),"a customer pays once")
 				paid_ids.append(c.id))
 	for i in range(6000):
@@ -239,9 +242,11 @@ func test_profiles_rating():
 	s.cfg.values.vip_chance = 0.3; s.cfg.values.artisan_chance = 0.4
 	var paid := {"vip":0,"artisan":0,"normal":0}
 	var two_items := {"n":0}
+	var weak_sim: WeakRef = weakref(s)
 	s.sale.connect(func(_a,_p):
-		for c in s.customers:
-			if c.state == BricoCustomer.State.PAYING and c.timer >= s.checkout_time(c.checkout) - 0.001:
+		var live_sim: BricoSimulation = weak_sim.get_ref()
+		for c in live_sim.customers:
+			if c.state == BricoCustomer.State.PAYING and c.timer >= live_sim.checkout_time(c.checkout) - 0.001:
 				paid[c.profile] += 1
 				if c.items == 2: two_items.n += 1)
 	run_for(s,400)
@@ -297,6 +302,9 @@ func test_decor_franchise():
 	expect(s.progression.buy("franchise"),"franchise when all families open")
 	expect(s.franchise_level == 1 and s.expansion == 0 and not s.opened.paint and s.decor.is_empty() and s.workers.size() == 1,"franchise resets the store")
 	expect(s.money == s.cfg.v("initial_money")+s.cfg.v("franchise_start_bonus"),"franchise start money")
+	expect(s.sales.is_empty() and s.recent_stats().duration == 0 and s.measured_rpm() < 0,"franchise does not reuse the old workshop income rate")
+	var offline := BricoSaveStore.new("user://test_franchise.json")
+	expect(offline.offline_amount(s.snapshot(1000),8200,s.cfg).amount == 0,"new franchise cannot immediately claim the previous workshop offline income")
 	expect(s.total_sales == sales and is_equal_approx(s.franchise_multiplier(),1.15),"history kept and permanent bonus")
 	run_for(s,120)
 	expect(s.stock_audit() == 0 and s.total_sales > sales,"new workshop runs after franchise")
@@ -327,3 +335,20 @@ func test_new_save_fields():
 	var code := Marshalls.utf8_to_base64(JSON.stringify(s.snapshot(1000)))
 	expect(JSON.parse_string(Marshalls.base64_to_utf8(code)).money == s.money,"save code round-trips")
 	store.reset()
+
+func test_legacy_release_save():
+	# Captured from the original three-family release, including unsettled cargo recovery.
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/legacy_v2.json"))
+	var store := BricoSaveStore.new("user://test_legacy_release.json")
+	expect(store.valid(data),"original release snapshot remains accepted")
+	var sim := BricoSimulation.new(71)
+	sim.restore(data)
+	expect(sim.money == int(data.money) and sim.expansion == int(data.expansion),"legacy money and expansions preserved")
+	for id in ["tools","paint","garden"]:
+		expect(sim.opened[id] == data.opened[id] and sim.levels[id].value == int(data.levels[id].value),"legacy family upgrades preserved: " + id)
+		expect(sim.inventory.reserve[id] == int(data.reserve[id]) and sim.inventory.shelves[id] == int(data.shelves[id]),"legacy goods preserved: " + id)
+	expect(not sim.opened.electric and not sim.opened.plumbing,"new families start locked for existing players")
+	expect(sim.tutorial == 5 and sim.total_sales == int(data.total_sales),"legacy tutorial and sales retained")
+	expect(sim.settings.music and sim.settings.volume == 0.8 and not sim.daily.is_empty(),"new settings and daily objective receive defaults")
+	run_for(sim,120)
+	expect(sim.stock_audit() == 0 and sim.total_sales > int(data.total_sales),"original release save resumes live trading")

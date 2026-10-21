@@ -55,3 +55,14 @@ Le test navigateur utilise Playwright/Chromium et des captures OCR pour vérifie
 - Grande mise à jour : profils de clients (VIP, artisans à 2 articles, conservation du stock vérifiée), satisfaction et note bayésienne sur 40 visites (influence les arrivées), objectifs du jour, statistiques, décoration, franchise (prestige +15 %/niveau), employés nommés à spécialité, camion sur la route, volume, musique de nuit, ambiance, astuces uniques, export/import de sauvegarde par code (horodatage remis à zéro : aucun gain hors ligne par transfert).
 - Équilibrage relancé après correction d’un succès trop précoce : grand dépôt vers 14–16 min ; suite : 6 182 assertions, 0 échec ; UI smoke 0 échec. Workflows GitHub Actions ajoutés (tests, Pages).
 - Non vérifié : appareil iPad/Android réel (seulement émulation mobile dans Chromium), CI non encore exécutée sur GitHub.
+
+
+## Intégration des améliorations du collègue — 21 octobre 2026
+
+Les six commits de `ameliorations-contenu-evenements-succes` (jusqu’à `e4ea284`) sont repris en conservant leur historique. Vérification locale complémentaire : 6 196 assertions, zéro échec ; reprise d’une vraie sauvegarde v2 issue de la première version (trois familles), conservation des stocks et nouvelles familles verrouillées par défaut. Test UI sans échec, y compris six ouvertures/fermetures de Statistiques sans croissance des nœuds orphelins.
+
+Corrections d’intégration : le pilote de rafraîchissement du graphe est désormais un enfant du panneau ; les callbacks des tests ne retiennent plus leur propre simulation ; une franchise réinitialise la fenêtre récente de revenus pour ne pas créditer hors ligne le rendement du précédent atelier ; la lecture des boucles audio est arrêtée explicitement à la fermeture. Le test navigateur lit uniquement la zone monétaire, attend un véritable encaissement et contrôle également les erreurs de console.
+
+L’export web est reconstruit avec le moteur officiel Godot 4.6.3. `tools/check_web_export.py` vérifie les signatures, les tailles HTML/pack/WASM, le chargeur gzip et la configuration Vercel. Les fichiers `vercel.json`, `.vercelignore` et `docs/VERCEL.md` préparent l’hébergement statique du dossier web/. Le compte Vercel est connecté ; au premier contrôle, Vercel a refusé l’accès à son espace de projets (403, autorisation de l’espace à compléter). Ne pas annoncer de déploiement Vercel tant qu’un état READY n’est pas reçu.
+
+Les durées et performances de la première version ne décrivent plus automatiquement cette version enrichie. Aucun nouveau résultat sur appareil iPad/Android réel n’est revendiqué. Les workflows GitHub Actions évoqués par le collègue n’étaient pas inclus dans la branche ; le README a été corrigé pour ne pas annoncer une CI absente.

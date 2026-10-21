@@ -110,10 +110,11 @@ docs/                      Captures, résultats et limites
 
 Le contenu utilise des identifiants stables (`atelier_01`, `tools`, `paint`, `garden`). Un autre magasin pourra apporter ses définitions et son plan. Il n’y a pas de carte ni de système de magasins multiples prématuré.
 
-## Intégration continue
+## Hébergement et vérifications
 
-- `.github/workflows/tests.yml` lance la suite de tests Godot 4.6.3 à chaque push et pull request.
-- `.github/workflows/pages.yml` publie `web/` sur GitHub Pages à chaque push sur `main`. Activation unique par le propriétaire : **Settings › Pages › Source : GitHub Actions**.
+Le lien Safari indiqué plus haut utilise Sites. Le dépôt est également préparé pour **Vercel** : [instructions et transfert de sauvegarde](docs/VERCEL.md). Les fichiers Godot sont déjà exportés dans `web/` ; aucun build Godot n’est nécessaire sur Vercel.
+
+Les suites de tests sont exécutables avec les commandes ci-dessous. Les workflows GitHub Actions mentionnés dans une version antérieure du README n’étaient pas présents dans la branche reçue : aucun résultat de CI GitHub n’est revendiqué.
 
 ## Tests
 
@@ -156,4 +157,6 @@ Code et créations originales du projet sous licence MIT : [LICENSE](LICENSE). P
 Prototype jouable, **pas prêt à publier**. Les tests sur appareils Android/iOS, les encoches réelles, les performances et les exports signés restent à valider. Aucun résultat de fluidité mobile n’est déduit des tests Linux. Le navigateur Chromium a aussi exécuté le véritable export WebAssembly ; Safari sur iPad reste à vérifier.
 
 
-Tests navigateur optionnels : `tests/test_web.py` requiert Python, Playwright/Chromium et Tesseract pour lire les captures. Ces outils ne sont pas requis pour jouer ou pour lancer le serveur web local. Exécuter le test avec `python3 tests/test_web.py` après démarrage de `tools/serve_web.py`.
+Tests navigateur optionnels : `tests/test_web.py` requiert Python, Pillow, Playwright/Chromium et Tesseract pour lire les captures. Ces outils ne sont pas requis pour jouer ou pour lancer le serveur web local. Exécuter le test avec `python3 tests/test_web.py` après démarrage de `tools/serve_web.py`.
+
+Vérification du paquet statique avant publication : `python3 tools/check_web_export.py`.

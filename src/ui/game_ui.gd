@@ -375,7 +375,10 @@ func stats_sheet():
 			var color := Color("8c6bc4") if i == values.size()-1 else Color("2f9e6a")
 			chart.draw_rect(Rect2(x+3,130-h,w-6,h),color)
 		chart.draw_string(ThemeDB.fallback_font,Vector2(0,148),"max %d pièces/min · barre violette : minute en cours" % top,HORIZONTAL_ALIGNMENT_LEFT,-1,14,MUTED))
-	live_labels.append([label(""),func(): chart.queue_redraw(); stars.queue_redraw(); return ""])
+	var redraw_driver := label("")
+	redraw_driver.hide()
+	content.add_child(redraw_driver)
+	live_labels.append([redraw_driver,func(): chart.queue_redraw(); stars.queue_redraw(); return ""])
 	live(func():
 		var lines := "Ventes : %d clients · %s pièces encaissées\nAujourd’hui : %s pièces · meilleur jour : %s pièces\nClients satisfaits : %d · VIP servis : %d · objectifs du jour : %d" % [sim.total_sales,format_money(sim.total_revenue),format_money(sim.day_revenue),format_money(maxi(sim.best_day,sim.day_revenue)),sim.happy_served,sim.vip_served,sim.dailies_done]
 		var best := ""; var best_n := -1

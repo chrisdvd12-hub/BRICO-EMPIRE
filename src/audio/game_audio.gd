@@ -135,3 +135,10 @@ func music(chords: Array = [[261.63,329.63,392.0,523.25],[220.0,261.63,329.63,44
 	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	stream.loop_begin = 0; stream.loop_end = count
 	return stream
+
+func _exit_tree():
+	# Release playing loops when restarting the game or leaving the application.
+	for child in get_children():
+		if child is AudioStreamPlayer:
+			child.stop()
+			child.stream = null

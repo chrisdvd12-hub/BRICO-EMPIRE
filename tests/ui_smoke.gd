@@ -67,6 +67,11 @@ func run():
 	await capture("03-magasin-agrandi")
 	ui.open_sheet("workers",""); await capture("04-equipe")
 	ui.close_sheet(); await frame()
+	var orphan_count := int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
+	for _i in range(6):
+		ui.open_sheet("stats",""); await frame()
+		ui.close_sheet(); await frame()
+	expect(int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)) == orphan_count,"reopening statistics does not leak orphan nodes")
 	# Touch selection at projected coordinates.
 	shelf = view.camera_offset+view.p(Vector2(210,440))*view.camera_zoom
 	var down := InputEventScreenTouch.new(); down.index = 0; down.position = shelf; down.pressed = true; Input.parse_input_event(down)

@@ -35,6 +35,8 @@ var restock_count := 0
 var empty_departures := 0
 var next_id := 0
 var sales: Array = []
+# Recent income must describe the current workshop, not the previous franchise.
+var revenue_started_at := 0.0
 var total_sales := 0
 var total_revenue := 0
 var settings := {"sound":true,"music":true,"reduced_effects":false,"volume":0.8}
@@ -195,6 +197,8 @@ func franchise_ready() -> bool:
 # Prestige: open a new workshop with a permanent sales bonus; history and achievements stay.
 func start_franchise():
 	franchise_level += 1
+	sales.clear()
+	revenue_started_at = elapsed
 	money = cfg.v("initial_money") + franchise_level * cfg.v("franchise_start_bonus")
 	expansion = 0; checkouts = 1
 	for f in cfg.families:
@@ -329,13 +333,14 @@ func tick(dt: float):
 		else: advice = "L’activité est fluide. Épargnez pour votre prochain objectif."
 		observed = {"empty":0.0,"queue":0.0,"goods":0.0}
 func recent_stats() -> Dictionary:
-	var duration := minf(120,elapsed)
+	var duration := minf(120, maxf(0, elapsed-revenue_started_at))
 	var revenue := 0
 	for s in sales: revenue += int(s[1])
 	return {"duration":duration,"revenue":revenue,"count":sales.size()}
 func measured_rpm() -> float:
-	if elapsed < 30 or sales.size() < 2: return -1
-	return recent_stats().revenue * 60.0 / minf(120,elapsed)
+	var stats := recent_stats()
+	if stats.duration < 30 or sales.size() < 2: return -1
+	return stats.revenue * 60.0 / stats.duration
 func stock_audit() -> int:
 	var n := inventory.total() + inventory.sold
 	for w in workers: n += w.cargo
@@ -349,7 +354,7 @@ func snapshot(now: int) -> Dictionary:
 		if w.cargo > 0: reserves[w.family] += w.cargo
 	for c in customers:
 		if c.items > 0: reserves[c.family] += c.items
-	return {"version":2,"store_id":cfg.v("store_id"),"money":money,"opened":opened.duplicate(true),"levels":levels.duplicate(true),"worker_levels":worker_levels.duplicate(true),"cash_levels":cash_levels.duplicate(),"worker_count":workers.size(),"expansion":expansion,"checkouts":checkouts,"shelves":inventory.shelves.duplicate(true),"reserve":reserves,"tutorial":tutorial,"settings":settings.duplicate(true),"elapsed":elapsed,"sales":sales.duplicate(true),"total_sales":total_sales,"total_revenue":total_revenue,"achievements":achievements.duplicate(),"achievement_rewards":achievement_rewards,"events_seen":events_seen,"outcomes":outcomes.duplicate(),"happy_served":happy_served,"vip_served":vip_served,"family_sales":family_sales.duplicate(),"minute_revenue":minute_revenue.duplicate(),"day_revenue":day_revenue,"best_day":best_day,"last_day":last_day,"daily":daily.duplicate(),"dailies_done":dailies_done,"decor":decor.duplicate(),"franchise_level":franchise_level,"tips_seen":tips_seen.duplicate(),"last_saved":now,"delivery_timer":delivery_timer,"observed_rate":recent_stats()}
+	return {"version":2,"store_id":cfg.v("store_id"),"money":money,"opened":opened.duplicate(true),"levels":levels.duplicate(true),"worker_levels":worker_levels.duplicate(true),"cash_levels":cash_levels.duplicate(),"worker_count":workers.size(),"expansion":expansion,"checkouts":checkouts,"shelves":inventory.shelves.duplicate(true),"reserve":reserves,"tutorial":tutorial,"settings":settings.duplicate(true),"elapsed":elapsed,"revenue_started_at":revenue_started_at,"sales":sales.duplicate(true),"total_sales":total_sales,"total_revenue":total_revenue,"achievements":achievements.duplicate(),"achievement_rewards":achievement_rewards,"events_seen":events_seen,"outcomes":outcomes.duplicate(),"happy_served":happy_served,"vip_served":vip_served,"family_sales":family_sales.duplicate(),"minute_revenue":minute_revenue.duplicate(),"day_revenue":day_revenue,"best_day":best_day,"last_day":last_day,"daily":daily.duplicate(),"dailies_done":dailies_done,"decor":decor.duplicate(),"franchise_level":franchise_level,"tips_seen":tips_seen.duplicate(),"last_saved":now,"delivery_timer":delivery_timer,"observed_rate":recent_stats()}
 func restore(data: Dictionary):
 	money = maxi(0,int(data.get("money",cfg.v("initial_money"))))
 	expansion = clampi(int(data.get("expansion",0)),0,2)
@@ -371,6 +376,7 @@ func restore(data: Dictionary):
 		if key == "volume": settings[key] = clampf(float(saved_settings.get(key,settings[key])),0.0,1.0)
 		else: settings[key] = bool(saved_settings.get(key,settings[key]))
 	elapsed = maxf(0,float(data.get("elapsed",0)))
+	revenue_started_at = clampf(float(data.get("revenue_started_at",0)),0,elapsed)
 	sales = []
 	for s in data.get("sales",[]):
 		if s is Array and s.size() == 2 and s[0] is float and s[1] >= 0: sales.append(s)
