@@ -27,6 +27,7 @@ func setup(simulation: BricoSimulation):
 	daylight = CanvasModulate.new(); add_child(daylight)
 	# Neighbourhood: static decor behind the store, traffic and lights above it.
 	var world_back := BricoWorldView.new(); world_back.setup(sim,false); add_child(world_back)
+	var floor_layer := BricoStoreFloor.new(); floor_layer.setup(sim); add_child(floor_layer)
 	var world_front := BricoWorldView.new(); world_front.setup(sim,true); add_child(world_front)
 	sim.sale.connect(func(n,p):
 		if effects.size() < sim.cfg.v("effect_limit"): effects.append({"p":p,"text":"+%d" % n,"time":0.0})
@@ -80,6 +81,8 @@ func box(r: Rect2, color: Color, height := 24.0):
 	draw_colored_polygon(PackedVector2Array([d,c,c+h,d+h]),color.darkened(.12))
 	draw_colored_polygon(PackedVector2Array([b,c,c+h,b+h]),color.darkened(.25))
 	draw_colored_polygon(PackedVector2Array([a+h,b+h,c+h,d+h]),color)
+	# Light catches the front top edge.
+	draw_line(d+h,c+h,color.lightened(.3),1.5,true)
 func product(at: Vector2, kind: String, shade: Color, variant: int):
 	var q := p(at)
 	match kind:
@@ -226,14 +229,24 @@ func cashier(index: int):
 func _draw():
 	if sim == null: return
 	# Original three-quarter artwork; coordinates also drive navigation and selection.
-	floor_rect(Rect2(-30,-30,660,1000),Color("a39d88"))
+	# Floor tiles are cached in BricoStoreFloor, drawn behind this node.
 	var top := 300 if sim.expansion == 0 else (140 if sim.expansion == 1 else 0)
-	floor_rect(Rect2(0,top,600,900-top),Color("f2e6cc"))
-	for y in range(top,901,60): draw_line(p(Vector2(0,y)),p(Vector2(600,y)),Color("dfd5be"),1,true)
-	for x in range(0,601,60): draw_line(p(Vector2(x,top)),p(Vector2(x,900)),Color("dfd5be"),1,true)
-	# Back and left walls with visible height.
+	# Back and left walls with visible height, panels, high windows and a brand stripe.
 	box(Rect2(0,top,600,12),Color("96bbad"),54)
+	var seams := PackedVector2Array()
+	for x in range(50,600,50):
+		var base := p(Vector2(x,top+12)); seams.append(base); seams.append(base+Vector2(0,-54))
+	draw_multiline(seams,Color("7fa597"),1.5)
+	for x in range(40,560,130):
+		var w := p(Vector2(x,top+12))
+		draw_rect(Rect2(w+Vector2(0,-46),Vector2(70,14)),Color("cfe6ea"))
+		draw_line(w+Vector2(0,-46),w+Vector2(70,-46),Color(1,1,1,.8),2)
+	draw_line(p(Vector2(0,top+12))+Vector2(0,-20),p(Vector2(600,top+12))+Vector2(0,-20),ORANGE,4)
 	box(Rect2(0,top,12,900-top),Color("c5d3bd"),48)
+	var side := PackedVector2Array()
+	for y in range(top+60,900,60):
+		var base := p(Vector2(12,y)); side.append(base); side.append(base+Vector2(0,-48))
+	draw_multiline(side,Color("a9b9a2"),1.5)
 	if sim.expansion < 2:
 		var closed_top := 140 if sim.expansion == 0 else 0
 		floor_rect(Rect2(15,closed_top,570,top-closed_top-12),Color("b7c4af"))

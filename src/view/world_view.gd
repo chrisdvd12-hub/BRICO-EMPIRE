@@ -12,6 +12,8 @@ var patches: Array = []
 var cars: Array = []
 var walkers: Array = []
 var clouds: Array = []
+# Batched texture strokes, generated once: [points, colour, width].
+var strokes: Array = []
 const WORLD := Rect2(-2600,-2300,5800,5800)
 const SPAN_X := Vector2(-1700,2300)
 const INK := Color("174956")
@@ -39,6 +41,7 @@ func setup(simulation: BricoSimulation, is_animated: bool):
 		for i in range(70):
 			var at := Vector2(rng.randf_range(-1700,2300),rng.randf_range(-1500,2500))
 			if is_free(at): patches.append({"p":at,"r":Vector2(rng.randf_range(50,130),rng.randf_range(25,60))})
+		build_textures(rng)
 	else:
 		for i in range(9):
 			cars.append({"x":rng.randf_range(SPAN_X.x,SPAN_X.y),"lane":i % 2,"speed":rng.randf_range(90,150),"color":Color(CAR_COLORS[i % CAR_COLORS.size()])})
@@ -46,6 +49,51 @@ func setup(simulation: BricoSimulation, is_animated: bool):
 			walkers.append({"x":rng.randf_range(SPAN_X.x,SPAN_X.y),"side":i % 2,"speed":rng.randf_range(22,38)*(1 if i % 3 else -1),"shirt":Color(SHIRTS[i % SHIRTS.size()]),"id":i})
 		for i in range(4):
 			clouds.append({"p":Vector2(rng.randf_range(SPAN_X.x,SPAN_X.y),rng.randf_range(-1200,2200)),"r":rng.randf_range(170,300)})
+func grass_at(at: Vector2) -> bool:
+	if Rect2(-75,-75,750,1195).has_point(at) or Rect2(-2600,1110,5800,190).has_point(at): return false
+	if Rect2(-2600,1350,5800,130).has_point(at) or Rect2(-600,400,320,170).has_point(at): return false
+	return not (Rect2(760,420,270,190).has_point(at) or Rect2(790,780,240,170).has_point(at))
+func build_textures(rng: RandomNumberGenerator):
+	var blades_dark := PackedVector2Array(); var blades_light := PackedVector2Array()
+	var flowers := [PackedVector2Array(),PackedVector2Array(),PackedVector2Array()]
+	for i in range(11000):
+		var at := Vector2(rng.randf_range(-1500,2100),rng.randf_range(-1200,2300))
+		if not grass_at(at): continue
+		var q := p(at); var lean := rng.randf_range(-2.5,2.5)
+		var target := blades_dark if i % 2 == 0 else blades_light
+		target.append(q); target.append(q+Vector2(lean,-rng.randf_range(4,8)))
+		if i % 70 == 0:
+			var f: PackedVector2Array = flowers[i % 3]; f.append(q); f.append(q+Vector2(2.5,0))
+	strokes.append([blades_dark,GRASS.darkened(.2),1.5,"grass"])
+	strokes.append([blades_light,GRASS.lightened(.16),1.5,"grass"])
+	strokes.append([flowers[0],Color("fff7e6"),4,"grass"]); strokes.append([flowers[1],Color("f6d55c"),4,"grass"]); strokes.append([flowers[2],Color("e99ab8"),4,"grass"])
+	# Asphalt grain on road and parking, gravel around the store.
+	var grain_dark := PackedVector2Array(); var grain_light := PackedVector2Array(); var gravel := PackedVector2Array()
+	for i in range(4200):
+		var at := Vector2(rng.randf_range(-1500,2100),rng.randf_range(ROAD_Y,ROAD_Y+110))
+		if i % 9 == 0: at = Vector2(rng.randf_range(-40,640),rng.randf_range(975,1115))
+		var q := p(at); var target := grain_dark if i % 2 == 0 else grain_light
+		target.append(q); target.append(q+Vector2(2,0))
+	for i in range(900):
+		var at := Vector2(rng.randf_range(-70,670),rng.randf_range(-70,980))
+		if Rect2(-25,-25,650,990).has_point(at): continue
+		var q := p(at); gravel.append(q); gravel.append(q+Vector2(2.5,0))
+	strokes.append([grain_dark,ASPHALT.darkened(.3),2,"ground"]); strokes.append([grain_light,ASPHALT.lightened(.16),2,"ground"])
+	strokes.append([gravel,Color("8f8a77"),2.5,"grass"])
+	# Sidewalk slab joints.
+	var joints := PackedVector2Array()
+	for x in range(-2600,3200,45):
+		for y in [1115.0,1260.0]: joints.append(p(Vector2(x,y))); joints.append(p(Vector2(x,y+35)))
+	strokes.append([joints,SIDEWALK.darkened(.12),1.5,"ground"])
+	# Road cracks.
+	var cracks := PackedVector2Array()
+	for i in range(40):
+		var at := Vector2(rng.randf_range(-1500,2100),rng.randf_range(ROAD_Y+8,ROAD_Y+100))
+		var point := at
+		for k in range(3):
+			var next := point+Vector2(rng.randf_range(6,16),rng.randf_range(-6,6))
+			cracks.append(p(point)); cracks.append(p(next)); point = next
+	strokes.append([cracks,ASPHALT.darkened(.4),1.5,"ground"])
 func is_free(at: Vector2) -> bool:
 	for r in FREE:
 		if r.has_point(at): return false
@@ -82,6 +130,7 @@ func box(r: Rect2, color: Color, height := 24.0, base := 0.0):
 	draw_colored_polygon(PackedVector2Array([d,c,c+h,d+h]),color.darkened(.12))
 	draw_colored_polygon(PackedVector2Array([b,c,c+h,b+h]),color.darkened(.25))
 	draw_colored_polygon(PackedVector2Array([a+h,b+h,c+h,d+h]),color)
+	draw_line(d+h,c+h,color.lightened(.3),1.5,true)
 func ellipse(center: Vector2, radii: Vector2, color: Color):
 	var points := PackedVector2Array()
 	for i in range(28): points.append(center+Vector2(cos(i*TAU/28)*radii.x,sin(i*TAU/28)*radii.y))
@@ -102,7 +151,11 @@ func _draw():
 	else: draw_static()
 func draw_static():
 	floor_rect(WORLD,GRASS)
-	for patch in patches: ellipse(p(patch.p),patch.r,GRASS.darkened(.06))
+	for patch in patches: ellipse(p(patch.p),patch.r,GRASS.darkened(.035))
+	# Park: sandy path around the pond instead of a hard-edged lawn.
+	draw_strokes("grass")
+	ellipse(p(Vector2(-440,480)),Vector2(185,92),Color("d9caa0"))
+	ellipse(p(Vector2(-440,480)),Vector2(168,82),Color("e4d6ae"))
 	# Gravel ring hugging the store walls.
 	floor_rect(Rect2(-70,-70,740,1050),Color("b9b39f"))
 	# Customer parking with stalls and a few parked cars.
@@ -110,13 +163,15 @@ func draw_static():
 	for i in range(12):
 		var x := -10+i*55
 		draw_line(p(Vector2(x,985)),p(Vector2(x,1045)),Color(1,1,1,.7),2,true)
-	for i in [0,2,3,6,8,10]:
-		car(Vector2(17+i*55,1015),Color(CAR_COLORS[(i*3) % CAR_COLORS.size()]),0,true)
+	for k in [1,4,5,9]: ellipse(p(Vector2(17+k*55,1022)),Vector2(14,6),Color(0.1,0.1,0.12,.18))
 	floor_rect(Rect2(250,940,100,35),Color("b9b39f"))
 	# Sidewalks, road, lane markings and pedestrian crossing.
 	floor_rect(Rect2(-2600,1115,5800,35),SIDEWALK)
 	floor_rect(Rect2(-2600,ROAD_Y,5800,110),ASPHALT)
 	floor_rect(Rect2(-2600,1260,5800,35),SIDEWALK)
+	draw_strokes("ground")
+	for i in [0,2,3,6,8,10]:
+		car(Vector2(17+i*55,1015),Color(CAR_COLORS[(i*3) % CAR_COLORS.size()]),0,true)
 	for x in range(-2600,3200,90):
 		if x > 230 and x < 370: continue
 		draw_line(p(Vector2(x,1208)),p(Vector2(x+45,1208)),Color("f1e8c8"),3,true)
@@ -130,9 +185,14 @@ func draw_static():
 		house(Rect2(x,1360,170,110),walls[i % walls.size()],roofs[i % roofs.size()],i)
 		i += 1
 	# Park with a pond and benches on the left.
-	floor_rect(Rect2(-700,300,520,360),GRASS.lightened(.06))
 	ellipse(p(Vector2(-440,480)),Vector2(150,72),Color("6aa9c9"))
 	ellipse(p(Vector2(-450,472)),Vector2(110,48),Color("86c0da"))
+	for r in [Vector2(36,13),Vector2(64,24)]:
+		var ring := PackedVector2Array()
+		for k in range(25): ring.append(p(Vector2(-470,465))+Vector2(cos(k*TAU/24)*r.x,sin(k*TAU/24)*r.y))
+		draw_polyline(ring,Color(1,1,1,.35),1.5,true)
+	for pad in [Vector2(-520,500),Vector2(-380,450),Vector2(-350,515)]:
+		ellipse(p(pad),Vector2(14,6),Color("5f9a55")); draw_circle(p(pad)+Vector2(4,-2),2.5,Color("f2b8cf"))
 	for b in [Vector2(-620,380),Vector2(-300,600)]:
 		box(Rect2(b.x,b.y,50,12),Color("a8774f"),10)
 	draw_line(p(Vector2(-180,640)),p(Vector2(-70,980)),Color("c9c0a6"),16,true)
@@ -142,6 +202,9 @@ func draw_static():
 	cafe(Rect2(800,790,220,150),Color("f3e3c8"),"BOULANGERIE",Color("3f7fb5"))
 	for at in lamp_points(): lamp(at)
 	for t in trees: tree(t.p,t.s,t.v)
+func draw_strokes(layer: String):
+	for item in strokes:
+		if item[3] == layer and not (item[0] as PackedVector2Array).is_empty(): draw_multiline(item[0],item[1],item[2])
 func text_at(at: Vector2, text: String, size: int, color: Color):
 	draw_string(font,p(at),text,HORIZONTAL_ALIGNMENT_LEFT,-1,size,color)
 func tree(at: Vector2, s: float, variant: int):
@@ -155,7 +218,19 @@ func tree(at: Vector2, s: float, variant: int):
 func house(r: Rect2, wall: Color, roof: Color, index: int):
 	ellipse(p(r.get_center()+Vector2(15,20)),Vector2(110,40),Color(0,0,0,.1))
 	box(r,wall,52)
-	box(Rect2(r.position-Vector2(8,8),r.size+Vector2(16,16)),roof,16,52)
+	# Siding boards on the front face.
+	var dd := p(r.position+Vector2(0,r.size.y)); var cc := p(r.end)
+	var boards := PackedVector2Array()
+	for y in range(8,52,7): boards.append(dd+Vector2(0,-y)); boards.append(cc+Vector2(0,-y))
+	draw_multiline(boards,wall.darkened(.07),1)
+	var rr := Rect2(r.position-Vector2(8,8),r.size+Vector2(16,16))
+	box(rr,roof,16,52)
+	# Roof tile rows on the top face.
+	var tiles := PackedVector2Array()
+	for k in range(1,8):
+		var y := rr.position.y+rr.size.y*k/8.0
+		tiles.append(p(Vector2(rr.position.x,y))+Vector2(0,-68)); tiles.append(p(Vector2(rr.end.x,y))+Vector2(0,-68))
+	draw_multiline(tiles,roof.darkened(.18),1.5)
 	# Door and windows on the front face.
 	var d := p(r.position+Vector2(0,r.size.y))
 	var c := p(r.end)
