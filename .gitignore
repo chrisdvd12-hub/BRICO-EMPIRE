@@ -1,0 +1,10 @@
+.godot/
+build/*
+!build/.gitkeep
+*.tmp
+*.bak
+*.apk
+*.aab
+*.ipa
+*.pck
+.DS_Store

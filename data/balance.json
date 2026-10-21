@@ -1,0 +1,131 @@
+{
+  "store_id": "atelier_01",
+  "initial_money": 200,
+  "max_clients": 20,
+  "arrival_min": 4.0,
+  "arrival_max": 6.0,
+  "customer_speed": 83.0,
+  "shelf_capacity": 8,
+  "reserve_capacity": 24,
+  "delivery_interval": 20.0,
+  "delivery_batch": 10,
+  "carry_base": 4,
+  "worker_speed": 90.0,
+  "restock_seconds": 1.8,
+  "checkout_seconds": 3.0,
+  "pick_seconds": 1.6,
+  "empty_patience": 12.0,
+  "slot_patience": 18.0,
+  "queue_tolerance": 5,
+  "max_workers": 3,
+  "worker_price": 450,
+  "checkout_price": 800,
+  "expansion_prices": [
+    1200,
+    2000
+  ],
+  "expansion_reserve_bonus": 24,
+  "upgrade_base": 100,
+  "upgrade_growth": 1.8,
+  "max_level": 5,
+  "capacity_step": 4,
+  "value_step": 0.25,
+  "speed_factor": 0.82,
+  "worker_speed_step": 0.2,
+  "carry_step": 2,
+  "offline_cap": 7200,
+  "offline_min_absence": 60,
+  "offline_min_observation": 60,
+  "offline_min_sales": 5,
+  "offline_factor": 0.4,
+  "autosave_seconds": 15,
+  "effect_limit": 18,
+  "families": [
+    {
+      "id": "tools",
+      "name": "Outillage",
+      "price": 10,
+      "unlock": 0,
+      "expansion": 0,
+      "color": "f5aa50",
+      "rect": [
+        160,
+        400,
+        100,
+        90
+      ],
+      "customer": [
+        [
+          190,
+          510
+        ],
+        [
+          230,
+          510
+        ]
+      ],
+      "worker": [
+        140,
+        450
+      ]
+    },
+    {
+      "id": "paint",
+      "name": "Peinture",
+      "price": 18,
+      "unlock": 300,
+      "expansion": 0,
+      "color": "d88cb5",
+      "rect": [
+        370,
+        400,
+        100,
+        90
+      ],
+      "customer": [
+        [
+          390,
+          510
+        ],
+        [
+          430,
+          510
+        ]
+      ],
+      "worker": [
+        350,
+        450
+      ]
+    },
+    {
+      "id": "garden",
+      "name": "Jardinage",
+      "price": 28,
+      "unlock": 650,
+      "expansion": 1,
+      "color": "82bb70",
+      "rect": [
+        370,
+        190,
+        100,
+        80
+      ],
+      "customer": [
+        [
+          390,
+          290
+        ],
+        [
+          430,
+          290
+        ]
+      ],
+      "worker": [
+        350,
+        230
+      ]
+    }
+  ],
+  "expansion_shelf_bonus": 4,
+  "loading_seconds": 0.6
+}
