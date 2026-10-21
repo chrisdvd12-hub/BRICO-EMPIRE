@@ -78,6 +78,7 @@ Les rayons indiquent leur stock et signalent les ruptures. Le panneau réserve m
 - Changements de mobilier aux niveaux 3 et 5 de capacité/valeur ; changement de caisse à partir du niveau 3.
 - Sauvegarde locale atomique avec secours, tutoriel, réglages son/effets réduits et progression hors ligne prudente.
 - Graphismes vectoriels originaux, pièces qui jaillissent à chaque vente, éclat sur le rayon amélioré, clients pressés animés.
+- Un quartier vivant autour du magasin : parking, route avec voitures et passage piéton, passants, maisons, parc avec étang, café et boulangerie, arbres, lampadaires et fenêtres allumés la nuit. Glisser pour explorer, **Recentrer** pour revenir.
 - Sons et musique d’ambiance synthétisés (boucle Do–La m–Fa–Sol), désactivables séparément.
 
 ![Magasin agrandi](docs/03-magasin-agrandi.png)

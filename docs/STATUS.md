@@ -50,3 +50,4 @@ Le test navigateur utilise Playwright/Chromium et des captures OCR pour vérifie
 - Cycle jour/nuit (`CanvasModulate`, 5 min par jour), horloge dans l’en-tête, panneau Succès, bouton Options, toasts sur fond sombre, musique d’ambiance générée au démarrage.
 - Tests : 6 145 assertions, 0 échec ; `ui_smoke.gd` 0 échec ; équilibrage relancé : agrandissement 1 vers 8,1–8,5 min (contre 10,2–10,7), grand dépôt vers 18,8–19,4 min (contre 25–26,3), grâce aux récompenses et événements.
 - Export web reconstruit avec Godot 4.6.3 officiel (macOS) et modèles `web_nothreads` 4.6.3.
+- Quartier autour du magasin (`src/view/world_view.gd`) : calque statique dessiné une seule fois derrière le magasin (sol, parking, route, maisons, parc, commerces, arbres déterministes), calque animé au-dessus (voitures qui ralentissent au passage piéton, passants, ombres de nuages, éclairage nocturne). Limites de caméra élargies pour explorer.

@@ -25,6 +25,9 @@ func setup(simulation: BricoSimulation):
 	sim = simulation
 	recenter()
 	daylight = CanvasModulate.new(); add_child(daylight)
+	# Neighbourhood: static decor behind the store, traffic and lights above it.
+	var world_back := BricoWorldView.new(); world_back.setup(sim,false); add_child(world_back)
+	var world_front := BricoWorldView.new(); world_front.setup(sim,true); add_child(world_front)
 	sim.sale.connect(func(n,p):
 		if effects.size() < sim.cfg.v("effect_limit"): effects.append({"p":p,"text":"+%d" % n,"time":0.0})
 		if not sim.settings.reduced_effects and coins.size() < 30:
@@ -223,7 +226,7 @@ func cashier(index: int):
 func _draw():
 	if sim == null: return
 	# Original three-quarter artwork; coordinates also drive navigation and selection.
-	floor_rect(Rect2(-30,-30,660,1000),Color("537d7d"))
+	floor_rect(Rect2(-30,-30,660,1000),Color("a39d88"))
 	var top := 300 if sim.expansion == 0 else (140 if sim.expansion == 1 else 0)
 	floor_rect(Rect2(0,top,600,900-top),Color("f2e6cc"))
 	for y in range(top,901,60): draw_line(p(Vector2(0,y)),p(Vector2(600,y)),Color("dfd5be"),1,true)
@@ -321,8 +324,9 @@ func zoom_at(factor: float, at: Vector2):
 	camera_offset = at-before*camera_zoom
 	clamp_camera()
 func clamp_camera():
-	camera_offset.x = clampf(camera_offset.x,-500,250)
-	camera_offset.y = clampf(camera_offset.y,-650,380)
+	# Wide enough to stroll around the neighbourhood; Recentrer brings the store back.
+	camera_offset.x = clampf(camera_offset.x,-1400,1000)
+	camera_offset.y = clampf(camera_offset.y,-1700,900)
 func tap(at: Vector2):
 	var w := unproject(at)
 	for worker in sim.workers:
