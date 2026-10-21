@@ -27,6 +27,13 @@ var dev := false
 const TEAL := Color("174956")
 const PAPER := Color("fff5e2")
 const MUTED := Color("526b68")
+# Call-to-action palette: [fill, text]. Each role gets its own colour.
+const KINDS := {"buy":["2f9e6a","ffffff"],"build":["2f9e6a","ffffff"],"team":["e8893a","ffffff"],"trophy":["f2c14e","4a3306"],"options":["5b6f7a","ffffff"],"camera":["2f7fd0","ffffff"],"close":["d9634c","ffffff"],"skip":["ffffff","174956"],"danger":["c2492f","ffffff"],"default":["174956","fff5e2"],"maxed":["f2c14e","4a3306"]}
+var styles := {}
+var bold: FontVariation
+var build_button: Button
+var build_ready := false
+var pulse := 0.0
 func setup(simulation: BricoSimulation, store_view: BricoStoreView, developer: bool):
 	sim = simulation
 	view = store_view
@@ -48,12 +55,13 @@ func setup(simulation: BricoSimulation, store_view: BricoStoreView, developer: b
 		style.content_margin_top = 8; style.content_margin_bottom = 8
 		theme.set_stylebox(state,"Button",style)
 	root.theme = theme
+	bold = FontVariation.new(); bold.base_font = ThemeDB.fallback_font; bold.variation_embolden = 0.6
 	var header := panel_at(Vector2(12,12),Vector2(516,184),PAPER)
 	var top := VBoxContainer.new(); top.add_theme_constant_override("separation",3); header.add_child(top)
 	title_label = label("BRICO EMPIRE     /     ATELIER 01",16); top.add_child(title_label)
 	var money_row := HBoxContainer.new(); top.add_child(money_row)
 	money_label = label("",34); money_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; money_row.add_child(money_label)
-	var center := button("Recentrer",view.recenter); center.custom_minimum_size.x = 128; money_row.add_child(center)
+	var center := button("Recentrer",view.recenter,"camera"); center.custom_minimum_size.x = 128; money_row.add_child(center)
 	objective = label("",21); top.add_child(objective)
 	status = label("",18); top.add_child(status)
 	var bottom := panel_at(Vector2(12,782),Vector2(516,166),PAPER)
@@ -62,21 +70,18 @@ func setup(simulation: BricoSimulation, store_view: BricoStoreView, developer: b
 	var bottom_box := VBoxContainer.new(); bottom_box.add_theme_constant_override("separation",8); bottom.add_child(bottom_box)
 	advice = label("",22); bottom_box.add_child(advice)
 	var menu := HBoxContainer.new(); menu.add_theme_constant_override("separation",8); bottom_box.add_child(menu)
-	for item in [["Équipe","workers"],["Construire","build"],["Succès","achievements"],["Options","settings"]]:
-		var b := button(item[0],func(): open_sheet(item[1],"")); b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		# Four entries share the bar: smaller text and side margins keep them on one row.
+	for item in [["Équipe","workers","team"],["Construire","build","build"],["Succès","achievements","trophy"],["Options","settings","options"]]:
+		# Four entries share the bar: smaller text and compact margins keep them on one row.
+		var b := button(item[0],func(): open_sheet(item[1],""),item[2],true); b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.add_theme_font_size_override("font_size",20)
-		for state in ["normal","hover","pressed","disabled"]:
-			var st := (theme.get_stylebox(state,"Button") as StyleBoxFlat).duplicate()
-			st.content_margin_left = 4; st.content_margin_right = 4
-			b.add_theme_stylebox_override(state,st)
+		if item[1] == "build": build_button = b
 		menu.add_child(b)
 	tutorial_box = panel_at(Vector2(12,640),Vector2(516,125),Color("e3eed5"))
 	tutorial_box.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	tutorial_box.offset_left = 12; tutorial_box.offset_right = -12; tutorial_box.offset_top = -318; tutorial_box.offset_bottom = -190
 	var tuto := HBoxContainer.new(); tutorial_box.add_child(tuto)
 	tutorial_label = label("",22); tutorial_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; tuto.add_child(tutorial_label)
-	var skip := button("Passer",func(): sim.tutorial = 5; save_requested.emit()); skip.custom_minimum_size.x = 98; tuto.add_child(skip)
+	var skip := button("Passer",func(): sim.tutorial = 5; save_requested.emit(),"skip"); skip.custom_minimum_size.x = 98; tuto.add_child(skip)
 	toast_label = label("",18)
 	toast_label.position = Vector2(24,205); toast_label.size = Vector2(492,0)
 	toast_label.add_theme_color_override("font_color",PAPER)
@@ -103,10 +108,46 @@ func label(text: String, size := 19) -> Label:
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
-func button(text: String, callback: Callable) -> Button:
+func button(text: String, callback: Callable, kind := "default", compact := false) -> Button:
 	var b := Button.new(); b.text = text; b.custom_minimum_size.y = 72
 	b.pressed.connect(callback)
+	style_button(b,kind,compact)
 	return b
+func cta_style(kind: String, state: String, compact: bool) -> StyleBox:
+	var key := "%s/%s/%s" % [kind,state,compact]
+	if styles.has(key): return styles[key]
+	var base := Color(KINDS[kind][0])
+	var s := StyleBoxFlat.new()
+	s.set_corner_radius_all(14)
+	s.bg_color = base
+	s.border_color = base.darkened(.32)
+	match state:
+		"hover": s.bg_color = base.lightened(.12)
+		"pressed": s.bg_color = base.darkened(.08)
+		"disabled":
+			if kind == "maxed": s.bg_color = base.lightened(.45); s.border_color = base.darkened(.1)
+			else: s.bg_color = Color("d9dcd3"); s.border_color = Color("b6bab0")
+	if kind == "skip":
+		s.border_color = TEAL; s.border_width_left = 2; s.border_width_right = 2; s.border_width_top = 2
+		if state == "hover": s.bg_color = Color("eef6f4")
+	# Raised key: thick darker bottom edge that sinks when pressed (total height unchanged).
+	var pressed := state == "pressed"
+	s.border_width_bottom = 2 if pressed else 6
+	s.content_margin_left = 4 if compact else 14; s.content_margin_right = s.content_margin_left
+	s.content_margin_top = 12 if pressed else 8; s.content_margin_bottom = 6
+	if state != "disabled" and not pressed:
+		s.shadow_color = Color(0,0,0,.18); s.shadow_size = 4; s.shadow_offset = Vector2(0,3)
+	styles[key] = s
+	return s
+func style_button(b: Button, kind: String, compact := false):
+	if b.get_meta("cta","") == kind: return
+	b.set_meta("cta",kind)
+	for state in ["normal","hover","pressed","disabled"]: b.add_theme_stylebox_override(state,cta_style(kind,state,compact))
+	b.add_theme_stylebox_override("focus",StyleBoxEmpty.new())
+	var text := Color(KINDS[kind][1])
+	for key in ["font_color","font_hover_color","font_pressed_color","font_focus_color","font_hover_pressed_color"]: b.add_theme_color_override(key,text)
+	b.add_theme_color_override("font_disabled_color",text if kind == "maxed" else Color("7f8984"))
+	b.add_theme_font_override("font",bold)
 func panel_at(at: Vector2, dimensions: Vector2, color: Color) -> PanelContainer:
 	var panel := PanelContainer.new(); panel.position = at; panel.size = dimensions
 	var style := StyleBoxFlat.new(); style.bg_color = color; style.set_corner_radius_all(18)
@@ -145,7 +186,7 @@ func open_sheet(kind: String, id: String):
 	var heading := HBoxContainer.new(); column.add_child(heading)
 	var titles := {"shelf":sim.cfg.family(id).get("name","Rayon"),"workers":"Équipe de réassort","checkout":"Caisse %d" % (int(id)+1),"reserve":"Réserve & livraisons","expand":"Agrandir le magasin","build":"Construire & grandir","achievements":"Succès","settings":"Réglages"}
 	var title := label(titles.get(kind,"Brico Empire"),25); title.size_flags_horizontal = Control.SIZE_EXPAND_FILL; heading.add_child(title)
-	heading.add_child(button("Fermer",close_sheet))
+	heading.add_child(button("Fermer",close_sheet,"close"))
 	var scroll := ScrollContainer.new(); scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL; scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED; column.add_child(scroll)
 	content = VBoxContainer.new(); content.size_flags_horizontal = Control.SIZE_EXPAND_FILL; content.add_theme_constant_override("separation",12); scroll.add_child(content)
 	match kind:
@@ -215,11 +256,11 @@ func open_sheet(kind: String, id: String):
 			var effects_button := CheckButton.new(); effects_button.text = "Réduire les effets visuels"; effects_button.button_pressed = sim.settings.reduced_effects; effects_button.custom_minimum_size.y = 72; content.add_child(effects_button)
 			effects_button.toggled.connect(func(enabled): sim.settings.reduced_effects = enabled; save_requested.emit())
 			content.add_child(label("Sauvegarde locale automatique · aucune publicité ni achat intégré. Les sons et la musique sont synthétisés par le jeu.",17))
-			var reset_button := button("Réinitialiser la partie",func():
+			var reset_button := button("Réinitialiser la partie",(func():
 				if confirm_reset: reset_requested.emit()
 				else:
 					confirm_reset = true
-					content.add_child(label("Attention : toute la progression sera effacée. Appuyez de nouveau sur Réinitialiser pour confirmer.",18)))
+					content.add_child(label("Attention : toute la progression sera effacée. Appuyez de nouveau sur Réinitialiser pour confirmer.",18))),"danger")
 			content.add_child(reset_button)
 			if dev: developer_controls()
 	refresh()
@@ -234,7 +275,7 @@ func purchase_row(action: String, target: String, title: String, effect: Callabl
 			var k := selection; var i := selected_id
 			open_sheet(k,i)
 		else:
-			show_toast(sim.progression.reason(action,target)); refresh())
+			show_toast(sim.progression.reason(action,target)); refresh(),"buy")
 	group.add_child(buy)
 	var reason_label := label("",15); group.add_child(reason_label)
 	rows.append({"action":action,"target":target,"detail":detail,"effect":effect,"button":buy,"reason":reason_label})
@@ -276,9 +317,14 @@ func refresh():
 		row.detail.text = str(row.effect.call()).split(" à ")[0] + " · au maximum" if maxed else row.effect.call()
 		row.button.text = "Niveau maximal" if maxed else "Acheter · %d pièces" % sim.progression.cost(row.action,row.target)
 		row.button.disabled = not why.is_empty()
+		style_button(row.button,"maxed" if maxed else "buy")
 		row.reason.text = why
-		row.reason.visible = not why.is_empty()
+		row.reason.visible = not why.is_empty() and not maxed
 	for item in live_labels: item[0].text = item[1].call()
+	# Nudge towards the build menu when a key purchase is affordable.
+	build_ready = sim.progression.reason("expand").is_empty() or sim.progression.reason("checkout").is_empty()
+	for f in sim.cfg.families:
+		if not sim.opened[f.id] and sim.progression.reason("unlock",f.id).is_empty(): build_ready = true
 static func format_money(amount: int) -> String:
 	var raw := str(amount); var result := ""
 	for i in range(raw.length()):
@@ -290,6 +336,11 @@ func _process(dt: float):
 	if refresh_timer <= 0: refresh_timer = .3; refresh()
 	toast_timer -= dt
 	if is_instance_valid(toast_label): toast_label.visible = toast_timer > 0
+	if is_instance_valid(build_button):
+		pulse += dt
+		var glow := 0.0 if not build_ready or sim.settings.reduced_effects else 0.18*(0.5+0.5*sin(pulse*5))
+		build_button.modulate = Color(1+glow,1+glow,1+glow)
+		build_button.text = "Construire !" if build_ready else "Construire"
 func _input(event: InputEvent):
 	if sim == null: return
 	if sim.tutorial == 4 and not is_instance_valid(sheet):
