@@ -4,6 +4,12 @@ Première version jouable d’un jeu de gestion mobile en français. Les clients
 
 **Moteur : Godot 4.6.3 stable, GDScript, rendu Compatibility.** Aucun module externe, serveur, compte, publicité ou achat intégré. Cible Android/iOS portrait ; développement et tests sur Linux.
 
+## Jouer directement sur Safari
+
+**[Ouvrir Brico Empire](https://brico-empire-jeu.vividmug7.chatgpt.site)**
+
+Hébergement HTTPS actif. Le site est privé : se connecter avec le compte ChatGPT propriétaire si demandé. Premier chargement : environ 10 Mo. Safari 16.4+ avec WebGL 2 est requis ; l’export a été testé sous Chromium, pas encore sur un iPad réel. La sauvegarde reste dans les données du navigateur.
+
 ## Jouer dans un navigateur (export fourni)
 
 Le dossier **[web](web/)** contient une version réellement exportée du même jeu, avec son moteur WebAssembly officiel compressé. Aucun Godot à installer pour jouer dans le navigateur.
