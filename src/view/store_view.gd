@@ -173,14 +173,16 @@ func character(agent, worker: bool):
 	var skin: Color = [Color("efbb8c"),Color("bc855f"),Color("8c5b44")][agent.id % 3]
 	var shirt: Color = ORANGE if worker else colors[agent.appearance]
 	var stride := sin(phase*13+agent.id)*4 if moving else 0.0
-	if not sim.settings.reduced_effects and ((worker and agent.state == BricoWorker.State.RESTOCKING) or (not worker and agent.state == BricoCustomer.State.PICKING)):
-		stride = sin(phase*9)*9
+	# Picking or restocking: feet stay planted, only the arms reach up to the shelf.
+	var reach := 0.0
+	if not moving and not sim.settings.reduced_effects and ((worker and agent.state == BricoWorker.State.RESTOCKING) or (not worker and agent.state == BricoCustomer.State.PICKING)):
+		reach = 0.5+0.5*sin(phase*5+agent.id)
 	draw_line(q+Vector2(-4,-10),q+Vector2(-5+stride,1),INK,5,true)
 	draw_line(q+Vector2(4,-10),q+Vector2(5-stride,1),INK,5,true)
 	q.y += bounce
 	round_rect(q+Vector2(-9,-30),Vector2(18,22),shirt,6)
-	draw_line(q+Vector2(-10,-25),q+Vector2(-12-stride,-14),skin,4,true)
-	draw_line(q+Vector2(10,-25),q+Vector2(12+stride,-14),skin,4,true)
+	draw_line(q+Vector2(-10,-25),q+Vector2(-12-stride,-14-reach*16),skin,4,true)
+	draw_line(q+Vector2(10,-25),q+Vector2(12+stride,-14-(1-reach)*16 if reach > 0 else -14),skin,4,true)
 	draw_circle(q+Vector2(0,-38),9,skin)
 	if worker:
 		round_rect(q+Vector2(-11,-47),Vector2(22,8),ORANGE.lightened(.2),4)
