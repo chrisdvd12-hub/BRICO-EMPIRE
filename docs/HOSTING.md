@@ -1,16 +1,18 @@
-# Hébergement de la version de test
+# Hébergement de la version enrichie
 
-URL confirmée après déploiement réussi : https://brico-empire-jeu.vividmug7.chatgpt.site
+URL active : https://brico-empire-jeu.vividmug7.chatgpt.site
 
-Le site est privé au compte propriétaire. Le passage du dépôt GitHub en public ne change pas cette audience. Utiliser le même compte ChatGPT pour accéder au site si une connexion est demandée.
+Publication confirmée le 2026-10-21T11:46:30.321916+00:00. Le même lien Safari sert désormais les améliorations du collègue. L’accès reste privé au compte propriétaire ; utiliser le même compte ChatGPT si une connexion est demandée.
 
 - Projet Sites : `appgprj_6ad8797c89fc8191b5a9c46ab9f3401d`
-- Version publiée : `appgprj_6ad8797c89fc8191b5a9c46ab9f3401d~appgver_20d307b01790819188c5bf9d498f2e70`
-- Déploiement : `appgdep_6ad879e09cb08191bddf03fd3ad64da4`
-- Source hébergée : `8802997f305b9987bf32bf21c67aafbf5862fed4`
-- Déploiement confirmé le 2026-10-21T08:38:11.759352+00:00.
+- Version publiée : `appgprj_6ad8797c89fc8191b5a9c46ab9f3401d~appgver_3b6808a816fc819190092361e5d780f1`
+- Déploiement : `appgdep_6ad8a60875048191add52121a5e496e9`
+- Commit du dépôt d’hébergement : `4759a55d67a7aba4c79529490173318e6ddf775c`
+- Commit du jeu intégré sur GitHub : `0fe0c67cc73782cb462631f21ffe4947e14faef3`
 
-Le contenu publié est une copie exacte du dossier web/ (hors WASM brut reproductible et métadonnées .import), placé dans dist/. Le fichier .openai/hosting.json du dépôt d’hébergement contient :
+Le dossier publié est une copie de `web/`, sans le WASM brut reproductible ni les fichiers `.import`, placé dans `dist/` du dépôt d’hébergement. Le pack vérifié fait 128 032 octets, SHA-256 `2b5414867a492b9505b299b44e6e2de1391a58261f86c3b5953907e113d5c104`. Il inclut les cinq familles, clients VIP/artisans, satisfaction, objectifs du jour, décoration, statistiques, franchise et transfert de sauvegarde.
+
+La configuration d’hébergement conservée est :
 
 ```json
 {
@@ -21,6 +23,8 @@ Le contenu publié est une copie exacte du dossier web/ (hors WASM brut reproduc
 }
 ```
 
-Tous les sources du jeu et les scripts de reproduction de l’export restent dans ce dépôt GitHub. Aucun jeton d’hébergement n’est versionné. Les helpers Sites habituels n’étaient pas installés dans l’environnement ; les sources ont été poussées par Git avec les credentials éphémères transmis par stdin et conservés en mémoire uniquement. Le paquet statique a été construit depuis ce commit exact avec git archive, puis publié par l’outil natif Sites.
+Tests avant publication : 6 196 assertions sans échec ; UI sans échec ; Chromium 360 × 640 : 200 → 210 → 220 pièces avec progression conservée au rechargement. Aucun test sur appareil iPad/Android réel n’est revendiqué. Voir [INTEGRATION.md](INTEGRATION.md) et les données brutes dans ce dépôt.
 
-La publication HTTPS est confirmée par Sites. Le jeu avait été exécuté et testé sous Chromium avant cette publication ; aucun test sur Safari/iPad réel n’est revendiqué. Les sauvegardes restent locales à cette origine et ne reprennent pas automatiquement celles d’un serveur localhost ou de Godot sur ordinateur.
+Les helpers Sites n’étaient pas installés dans cet environnement. Le dépôt d’hébergement existant a été ouvert et actualisé par Git, avec les credentials éphémères transmis par stdin et conservés en mémoire uniquement. L’archive statique a été construite depuis le commit poussé exact, puis publiée par l’outil natif Sites. Aucun jeton n’est versionné.
+
+Les sauvegardes restent propres à cette origine. Le futur passage à Vercel nécessite un transfert par le code disponible dans Options si le joueur veut conserver sa partie. Le dépôt est préparé pour Vercel ; à cette livraison, l’API Vercel refusait encore l’accès à l’espace de projets (403), donc aucun déploiement Vercel n’est annoncé.
