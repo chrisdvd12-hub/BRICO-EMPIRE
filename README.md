@@ -6,6 +6,8 @@ Première version jouable d’un jeu de gestion mobile en français. Les clients
 
 ## Version 3D — branche migration-3d
 
+**[Jouer à la version 3D de test](https://brico-empire-5arh2o96d-chrisdvd12-1767.vercel.app)** — déploiement Vercel READY du commit b948a04, accès susceptible de demander la connexion Vercel du propriétaire. Le lien de production plus bas sert encore la version 2D.
+
 La scène courante utilise une vraie géométrie 3D Godot : caméra orthographique, éclairage, ombres, meubles, produits et personnages articulés. La simulation, la grille de navigation projetée sur XZ et la sauvegarde v2 sont conservées. Les modèles sont construits par le code original de `src/view3d/` ; aucun modèle payant ou service distant.
 
 Importer `project.godot` avec **Godot 4.6.3 standard**, puis F5. Pour le navigateur : `python3 tools/serve_web.py`, puis http://localhost:8000. Le dossier `web/` contient l’export complet. `godot --path . -- --legacy-2d` lance la présentation 2D conservée pour comparaison.
@@ -18,9 +20,9 @@ Le mode graphique allégé se règle via l’engrenage en haut à droite : ombre
 
 Rayons 40 % plus larges, capacité de base de 12 unités ; mobilier propre à chaque famille, façade vitrée avec auvent, police arrondie Fredoka embarquée sous licence OFL, tenues des employés différenciées et effets d’ouverture. Trois pictogrammes bleu pétrole en bas ; petit engrenage des paramètres en haut à droite. Caméra bornée à la propriété, gestes tactiles et panneaux adaptés aux écrans étroits, jauge d’épargne vers le prochain palier. Les parties existantes conservent leurs stocks et améliorations.
 
-Voir [le bilan de cette refonte](docs/REDESIGN.md), ses mesures et ses limites de validation mobile.
+Voir [le bilan de cette refonte](docs/3D.md), ses mesures et ses limites de validation mobile.
 
-## Jouer directement sur Safari
+## Ancien lien de production 2D sur Safari
 
 **[Ouvrir Brico Empire sur Vercel](https://brico-empire.vercel.app)**
 
@@ -84,7 +86,9 @@ Des événements temporaires surviennent toutes les 2 à 4 minutes : **Heure de 
 
 Les rayons indiquent leur stock et signalent les ruptures. Le panneau réserve montre les capacités par famille et la prochaine livraison. Le conseil contextuel s’appuie sur les 20 dernières secondes d’activité. Le revenu par minute est mesuré sur les encaissements récents, jamais un rendement théorique.
 
-## Contenu de cette version
+## Systèmes conservés et présentation 2D de référence
+
+La liste ci-dessous décrit aussi les éléments visuels 2D conservés pour comparaison. En 3D, les longues routes animées, certains décors achetables et le cycle visuel jour/nuit ne sont pas encore transposés ; voir les limites de docs/3D.md.
 
 - Cinq familles originales : outillage, peinture, jardinage, électricité, plomberie ; deux agrandissements visibles du même magasin.
 - Trois événements temporaires, onze succès récompensés avec panneau de progression, cycle jour/nuit cosmétique.
