@@ -1,0 +1,8 @@
+{
+  "pack_bytes": 239752,
+  "pack_sha256": "d2eb7077b5eaf9227d7ace5e1cd40bbbdae9b2b899800503c07211546e136260",
+  "engine_bytes": 37700666,
+  "compressed_engine_bytes": 9382282,
+  "vercel_output": "web",
+  "result": "PASS"
+}

@@ -2,7 +2,8 @@
 
 | Ressource | Provenance | Licence |
 | --- | --- | --- |
-| Mobilier, produits, personnages, sol, façade, véhicule, effets | Dessin procédural original dans `src/view/store_view.gd`, créé pour Brico Empire | MIT, voir LICENSE |
+| Modèles 3D, mobilier, produits, personnages articulés, bâtiment et décor | Géométrie originale générée par `src/view3d/models.gd`, `agent_view.gd` et `store_3d.gd`, matériaux mats partagés ; aucune texture photographique | MIT |
+| Mobilier, produits, personnages, sol, façade, véhicule, effets 2D conservés | Dessin procédural original dans `src/view/store_view.gd`, créé pour Brico Empire | MIT, voir LICENSE |
 | Pictogrammes `assets/ui/*.svg` | Dessins vectoriels originaux créés pour cette refonte | MIT |
 | Police Fredoka `assets/fonts/Fredoka-Regular.ttf` et `Fredoka-Semibold.ttf` | [Google Fonts, Fredoka](https://github.com/google/fonts/tree/main/ofl/fredoka), instances statiques 450 et 600 obtenues avec fontTools depuis la source variable conservée dans `tools/font_sources/Fredoka.ttf` ; auteurs dans le fichier de licence | SIL Open Font License 1.1, texte complet : `assets/fonts/OFL.txt` |
 | Icône `assets/icon.svg` | Création originale vectorielle pour ce projet | MIT |

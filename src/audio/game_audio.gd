@@ -11,11 +11,16 @@ var night_player: AudioStreamPlayer
 var bird_player: AudioStreamPlayer
 var cricket_player: AudioStreamPlayer
 var ambience_timer := 4.0
+var restock_player: AudioStreamPlayer
+var seen_restocks := 0
+var restock_cooldown := 0.0
 const MUSIC_DB := -23.0
 func setup(simulation: BricoSimulation):
 	sim = simulation
 	sale_player = player(tone(740,0.10),-21)
 	purchase_player = player(tone(520,0.18),-18)
+	restock_player = player(tone(220,.075),-28)
+	seen_restocks = sim.restock_count
 	achievement_player = player(melody([523.25,659.25,783.99,1046.5],0.11),-16)
 	event_player = player(melody([392.0,587.33,392.0,587.33],0.09),-18)
 	sim.sale.connect(func(_n,_p):
@@ -57,6 +62,11 @@ func update_music():
 	music_player.volume_db = MUSIC_DB + linear_to_db(maxf(0.001,1.0-n))
 	if night_player != null: night_player.volume_db = MUSIC_DB - 2 + linear_to_db(maxf(0.001,n))
 func _process(dt: float):
+	restock_cooldown = maxf(0,restock_cooldown-dt)
+	if sim.restock_count > seen_restocks:
+		seen_restocks = sim.restock_count
+		if sim.settings.sound and restock_cooldown <= 0:
+			restock_player.play(); restock_cooldown = 1.5
 	AudioServer.set_bus_volume_db(0,linear_to_db(maxf(0.0001,float(sim.settings.volume))))
 	update_music()
 	if bird_player == null or not sim.settings.sound: return

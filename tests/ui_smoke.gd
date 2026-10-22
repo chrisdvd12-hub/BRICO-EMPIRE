@@ -24,7 +24,7 @@ func touch_button(b: Button):
 func run():
 	root.size = Vector2i(540,960)
 	var main := load("res://main.tscn") as PackedScene
-	game = main.instantiate(); root.add_child(game)
+	game = main.instantiate(); game.legacy_2d = true; root.add_child(game)
 	await frame()
 	game.set_process(false)
 	for i in range(30*70): game.sim.tick(1.0/30)

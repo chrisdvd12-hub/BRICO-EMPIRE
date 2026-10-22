@@ -5,7 +5,7 @@ signal reset_requested
 signal speed_changed(value: float)
 signal import_requested(code: String)
 var sim: BricoSimulation
-var view: BricoStoreView
+var view
 var root: Control
 var money_label: Label
 var title_label: Label
@@ -42,7 +42,7 @@ var confirm_import := false
 var header_panel: PanelContainer
 var bottom_panel: PanelContainer
 var nav_buttons := {}
-func setup(simulation: BricoSimulation, store_view: BricoStoreView, developer: bool):
+func setup(simulation: BricoSimulation, store_view, developer: bool):
 	sim = simulation
 	view = store_view
 	dev = developer
@@ -341,6 +341,8 @@ func open_sheet(kind: String, id: String):
 			music.toggled.connect(func(enabled): sim.settings.music = enabled; save_requested.emit())
 			var effects_button := CheckButton.new(); effects_button.text = "Réduire les effets visuels"; effects_button.button_pressed = sim.settings.reduced_effects; effects_button.custom_minimum_size.y = 72; content.add_child(effects_button)
 			effects_button.toggled.connect(func(enabled): sim.settings.reduced_effects = enabled; save_requested.emit())
+			var low := CheckButton.new(); low.text = "Mode graphique allégé"; low.button_pressed = sim.settings.graphics_low; low.custom_minimum_size.y = 72; content.add_child(low)
+			low.toggled.connect(func(enabled): sim.settings.graphics_low = enabled; save_requested.emit())
 			var volume_label := label("",20); content.add_child(volume_label)
 			var volume := HSlider.new(); volume.min_value = 0; volume.max_value = 1; volume.step = 0.05; volume.value = sim.settings.volume; volume.custom_minimum_size.y = 44
 			content.add_child(volume)

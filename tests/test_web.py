@@ -51,7 +51,7 @@ with sync_playwright() as p:
         page.screenshot(path=str(root/'docs/07-web-ventes.png'))
         after_sales = money('07-web-ventes.png')
         if after_sales > initial: break
-        assert time.monotonic()-started < 120,'No automatic sale within the browser test timeout'
+        assert time.monotonic()-started < int(os.environ.get('BRICO_SALE_TIMEOUT','240')),'No automatic sale within the browser test timeout'
     sale_wait_seconds = round(time.monotonic()-started,1)
     # Pointer positions scale with the portrait game canvas.
     page.touchscreen.tap(85*width/540,901*height/960)

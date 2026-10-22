@@ -50,7 +50,7 @@ with sync_playwright() as p:
         page.wait_for_timeout(900)
         assert 'Fermer' not in text(page),'Pinch opened a panel'
         # Recentring and selecting the shelf still work after a gesture.
-        tap(396,86);tap(228,408)
+        tap(396,86);tap(257,397)
         assert 'Capacit' in text(page),'Shelf cannot be touched after gestures'
         page.screenshot(path=str(ROOT/f'docs/touch-{width}.png'))
         assert not errors,errors

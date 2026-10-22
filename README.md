@@ -4,6 +4,16 @@ Première version jouable d’un jeu de gestion mobile en français. Les clients
 
 **Moteur : Godot 4.6.3 stable, GDScript, rendu Compatibility.** Aucun module externe, serveur, compte, publicité ou achat intégré. Cible Android/iOS portrait ; développement et tests sur Linux.
 
+## Version 3D — branche migration-3d
+
+La scène courante utilise une vraie géométrie 3D Godot : caméra orthographique, éclairage, ombres, meubles, produits et personnages articulés. La simulation, la grille de navigation projetée sur XZ et la sauvegarde v2 sont conservées. Les modèles sont construits par le code original de `src/view3d/` ; aucun modèle payant ou service distant.
+
+Importer `project.godot` avec **Godot 4.6.3 standard**, puis F5. Pour le navigateur : `python3 tools/serve_web.py`, puis http://localhost:8000. Le dossier `web/` contient l’export complet. `godot --path . -- --legacy-2d` lance la présentation 2D conservée pour comparaison.
+
+Le mode graphique allégé se règle via l’engrenage en haut à droite : ombres coupées et résolution 3D à 75 %, interface à sa résolution normale. Voir [la migration 3D et ses tests](docs/3D.md). Les liens publics ne doivent être considérés à jour qu’après vérification du déploiement.
+
+![Magasin 3D](docs/14-3d-magasin.png)
+
 ## Refonte visuelle et tactile
 
 Rayons 40 % plus larges, capacité de base de 12 unités ; mobilier propre à chaque famille, façade vitrée avec auvent, police arrondie Fredoka embarquée sous licence OFL, tenues des employés différenciées et effets d’ouverture. Trois pictogrammes bleu pétrole en bas ; petit engrenage des paramètres en haut à droite. Caméra bornée à la propriété, gestes tactiles et panneaux adaptés aux écrans étroits, jauge d’épargne vers le prochain palier. Les parties existantes conservent leurs stocks et améliorations.
@@ -131,6 +141,7 @@ godot --headless --path . --script tests/test_suite.gd
 godot --headless --path . --script tests/balance_sim.gd
 # Nécessite une session graphique, produit des captures dans docs/ :
 godot --path . --script tests/ui_smoke.gd -- --smoke
+godot --path . --script tests/scene_3d.gd -- --smoke
 ```
 
 Les tests utilisent des sauvegardes distinctes de la partie. `ui_smoke.gd` réinitialise uniquement sa sauvegarde `smoke_save.json`.

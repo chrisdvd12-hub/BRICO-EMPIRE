@@ -2,17 +2,19 @@ extends Node
 const STEP := 1.0/30
 var sim: BricoSimulation
 var save_store := BricoSaveStore.new()
-var view: BricoStoreView
+var view
 var ui: BricoGameUI
 var accumulator := 0.0
 var save_timer := 0.0
 var suspended := false
 var speed := 1.0
 var developer := false
+var legacy_2d := false
 var offline_notice := ""
 var sale_save_pending := false
 func _ready():
 	developer = "--dev" in OS.get_cmdline_user_args()
+	legacy_2d = legacy_2d or "--legacy-2d" in OS.get_cmdline_user_args()
 	if "--smoke" in OS.get_cmdline_user_args(): save_store = BricoSaveStore.new("user://smoke_save.json")
 	start_game()
 func start_game():
@@ -22,7 +24,8 @@ func start_game():
 	if not data.is_empty():
 		sim.restore(data)
 		apply_offline(data,now)
-	view = BricoStoreView.new(); view.setup(sim); add_child(view)
+	view = BricoStoreView.new() if legacy_2d else BricoStore3DView.new()
+	view.setup(sim); add_child(view)
 	ui = BricoGameUI.new(); add_child(ui); ui.setup(sim,view,developer)
 	var audio := BricoAudio.new(); audio.name = "Audio"; add_child(audio); audio.setup(sim)
 	ui.save_requested.connect(save_game)
