@@ -20,4 +20,4 @@ En environnement sans dossier utilisateur inscriptible, définir XDG_DATA_HOME, 
 
 Tester sur iPad/Safari et Android : clavier virtuel, gestes multiples, cycle de vie et lisibilité. Mesurer les performances sur appareil ; aucune promesse de 60 FPS validée. Affiner les mains et les interactions produits, les transitions des panneaux et la cohérence entre le rendu procédural et l’illustration du chargement C.
 
-Avant toute annonce de publication : confirmer le commit GitHub, le déploiement Vercel READY et le hash du pack public dans VERCEL.md. Les résultats navigateur finaux sont dans docs/cartoon/browser-results.json ; ne pas interpréter une ancienne capture comme la livraison actuelle.
+Production confirmée le 24 octobre 2026 : https://brico-empire.vercel.app, jeu commit 6038e0a, Vercel READY et pack public identique au pack exporté. Voir VERCEL.md. Avant toute publication suivante, refaire ces contrôles. Les résultats navigateur finaux sont dans docs/cartoon/browser-results.json ; ne pas interpréter une ancienne capture comme la livraison actuelle.

@@ -24,3 +24,6 @@ docs/**/*.import
 # Python verification caches.
 __pycache__/
 *.pyc
+
+# Additional generated QA shots; representative tracked captures remain versioned.
+docs/cartoon/*.png
