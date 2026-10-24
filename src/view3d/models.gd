@@ -3,19 +3,19 @@ extends RefCounted
 # Original shared meshes/materials; no external model pack or runtime dependency.
 var materials := {}
 var geometry := {}
-const TEAL := Color("245766")
-const CREAM := Color("f4ead5")
-const ORANGE := Color("eea04e")
+const TEAL := Color("007c9c")
+const CREAM := Color("fff9e6")
+const ORANGE := Color("ff8b16")
 func material(color: Color) -> StandardMaterial3D:
 	var key := color.to_html()
 	if not materials.has(key):
-		var m := StandardMaterial3D.new(); m.albedo_color = color; m.roughness = .9
+		var m := StandardMaterial3D.new(); m.albedo_color = color; m.roughness = 1.0; m.specular_mode = BaseMaterial3D.SPECULAR_DISABLED; m.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
 		materials[key] = m
 	return materials[key]
 func node(parent: Node3D, at := Vector3.ZERO) -> Node3D:
 	var n := Node3D.new(); n.position = at; parent.add_child(n); return n
 func mesh(parent: Node3D, shape: Mesh, at: Vector3, color: Color) -> MeshInstance3D:
-	var n := MeshInstance3D.new(); n.mesh = shape; n.material_override = material(color); n.position = at; parent.add_child(n); return n
+	var n := MeshInstance3D.new(); n.mesh = shape; n.material_override = material(color); n.position = at; n.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; parent.add_child(n); return n
 func block(parent: Node3D, at: Vector3, size: Vector3, color: Color, bevel := .025) -> MeshInstance3D:
 	var key := str(size)+str(bevel)
 	if not geometry.has(key): geometry[key] = rounded_mesh(size,bevel)
@@ -67,16 +67,16 @@ func pick(parent: Node3D, at: Vector3, size: Vector3, kind: String, id: String):
 	a.set_meta("kind",kind); a.set_meta("id",id)
 	var c := CollisionShape3D.new(); var shape := BoxShape3D.new(); shape.size = size; c.shape = shape; a.add_child(c); parent.add_child(a)
 func carton(parent: Node3D, at: Vector3, size := Vector3(.28,.23,.25)) -> Node3D:
-	var n := node(parent,at); block(n,Vector3.ZERO,size,Color("caa274"))
-	block(n,Vector3(0,size.y/2+.003,0),Vector3(.035,.008,size.z),Color("edce9c"),.001)
-	block(n,Vector3(0,0,size.z/2+.004),Vector3(.035,size.y,.008),Color("edce9c"),.001); return n
+	var n := node(parent,at); block(n,Vector3.ZERO,size,Color("e0a34e"))
+	block(n,Vector3(0,size.y/2+.003,0),Vector3(.035,.008,size.z),Color("ffda80"),.001)
+	block(n,Vector3(0,0,size.z/2+.004),Vector3(.035,size.y,.008),Color("ffda80"),.001); return n
 func plant(parent: Node3D, at: Vector3, large := false):
 	var n := node(parent,at); var s := 1.5 if large else 1.0
-	cylinder(n,Vector3(0,.08*s,0),.09*s,.16*s,Color("ca855c"))
-	cylinder(n,Vector3(0,.165*s,0),.095*s,.025*s,Color("e0a176"))
+	cylinder(n,Vector3(0,.08*s,0),.09*s,.16*s,Color("df641f"))
+	cylinder(n,Vector3(0,.165*s,0),.095*s,.025*s,Color("ff9a37"))
 	for i in range(4):
 		var a := i*TAU/4
-		var leaf := sphere(n,Vector3(sin(a)*.065,.25+float(i%2)*.05,cos(a)*.065)*s,Vector3(.09,.2,.08)*s,Color("76a565")); leaf.rotation.z = sin(a)*.5
+		var leaf := sphere(n,Vector3(sin(a)*.065,.25+float(i%2)*.05,cos(a)*.065)*s,Vector3(.09,.2,.08)*s,Color("36bd38")); leaf.rotation.z = sin(a)*.5
 func product(parent: Node3D, family: String, at: Vector3, variant: int, color: Color):
 	var n := node(parent,at)
 	match family:
@@ -85,6 +85,7 @@ func product(parent: Node3D, family: String, at: Vector3, variant: int, color: C
 				block(n,Vector3(0,.08,0),Vector3(.25,.15,.13),color)
 				block(n,Vector3(0,.18,0),Vector3(.1,.045,.035),TEAL,.008)
 				block(n,Vector3(0,.07,.071),Vector3(.035,.04,.01),CREAM,.002)
+				for x in [-.087,.087]: block(n,Vector3(x,.11,.073),Vector3(.025,.04,.012),ORANGE,.003)
 			else:
 				block(n,Vector3(0,.16,0),Vector3(.21,.09,.1),color)
 				block(n,Vector3(-.03,.08,0),Vector3(.055,.12,.07),TEAL,.008)
@@ -93,11 +94,12 @@ func product(parent: Node3D, family: String, at: Vector3, variant: int, color: C
 			var radius := .09 if variant%2 == 0 else .07
 			cylinder(n,Vector3(0,.11,0),radius,.21,CREAM)
 			cylinder(n,Vector3(0,.11,0),radius+.002,.10,color)
-			cylinder(n,Vector3(0,.223,0),radius+.008,.02,Color("bfcfc6"))
+			cylinder(n,Vector3(0,.223,0),radius+.008,.02,Color("ebf3f0"))
 			block(n,Vector3(0,.25,0),Vector3(.07,.025,.025),TEAL,.005)
+			block(n,Vector3(0,.11,radius+.003),Vector3(.085,.065,.009),CREAM,.007)
 		"garden":
 			if variant%2 == 0:
-				block(n,Vector3(0,.11,0),Vector3(.22,.21,.14),Color("cdbb8f"),.045)
+				block(n,Vector3(0,.11,0),Vector3(.22,.21,.14),Color("ffdc6d"),.045)
 				block(n,Vector3(0,.11,.076),Vector3(.19,.10,.015),color,.008)
 			else: plant(n,Vector3.ZERO)
 		"electric":
@@ -118,7 +120,7 @@ func batch_static(root: Node3D):
 		for i in range(parts.size()):
 			multi.set_instance_transform(i,root.global_transform.affine_inverse()*parts[i].global_transform)
 			parts[i].visible = false
-		var draw := MultiMeshInstance3D.new(); draw.multimesh = multi; draw.material_override = first.material_override; root.add_child(draw)
+		var draw := MultiMeshInstance3D.new(); draw.multimesh = multi; draw.material_override = first.material_override; draw.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; root.add_child(draw)
 func collect_meshes(root: Node, groups: Dictionary):
 	for child in root.get_children():
 		# Product groups change with inventory; articulated actors have a separate dynamic batch.
@@ -128,3 +130,13 @@ func collect_meshes(root: Node, groups: Dictionary):
 			if not groups.has(key): groups[key] = []
 			groups[key].append(child)
 		collect_meshes(child,groups)
+
+# Recognisable oversized brand prop; shared geometry, no additional lights or assets.
+func hammer(parent: Node3D, at: Vector3, size := 1.0) -> Node3D:
+	var n := node(parent,at); n.scale = Vector3.ONE*size
+	block(n,Vector3(0,-.15,0),Vector3(.12,.63,.13),ORANGE,.035)
+	block(n,Vector3(0,-.4,0),Vector3(.15,.18,.15),TEAL,.025)
+	block(n,Vector3(0,.19,0),Vector3(.51,.21,.24),Color("edf7ff"),.05)
+	block(n,Vector3(-.255,.19,0),Vector3(.065,.25,.28),TEAL,.025)
+	block(n,Vector3(.21,.16,0),Vector3(.18,.1,.20),TEAL,.025)
+	return n

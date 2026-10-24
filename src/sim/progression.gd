@@ -47,7 +47,7 @@ func reason(action: String, target: String = "") -> String:
 		"franchise":
 			if not sim.franchise_ready(): return "Ouvrez les 5 rayons et le grand dépôt"
 		_: return "Action inconnue"
-	if sim.money < cost(action,target): return "Il manque %d pièces" % (cost(action,target)-sim.money)
+	if sim.money < cost(action,target): return "Il manque %d billets" % (cost(action,target)-sim.money)
 	return ""
 func buy(action: String, target: String = "") -> bool:
 	if not reason(action,target).is_empty(): return false
@@ -82,13 +82,13 @@ func next_goal() -> Dictionary:
 	if action.is_empty(): return {}
 	return {"cost":cost(action,target),"action":action,"target":target}
 func objective() -> String:
-	if not sim.opened.paint: return "Ouvrir la peinture · %d pièces" % sim.cfg.family("paint").unlock
-	if sim.expansion == 0: return "Agrandir le magasin · %d pièces" % sim.cfg.v("expansion_prices")[0]
-	if not sim.opened.garden: return "Ouvrir le jardinage · %d pièces" % sim.cfg.family("garden").unlock
-	if sim.checkouts == 1: return "Ouvrir la deuxième caisse · %d pièces" % sim.cfg.v("checkout_price")
-	if sim.expansion == 1: return "Créer le grand dépôt · %d pièces" % sim.cfg.v("expansion_prices")[1]
+	if not sim.opened.paint: return "Ouvrir la peinture · %d billets" % sim.cfg.family("paint").unlock
+	if sim.expansion == 0: return "Agrandir le magasin · %d billets" % sim.cfg.v("expansion_prices")[0]
+	if not sim.opened.garden: return "Ouvrir le jardinage · %d billets" % sim.cfg.family("garden").unlock
+	if sim.checkouts == 1: return "Ouvrir la deuxième caisse · %d billets" % sim.cfg.v("checkout_price")
+	if sim.expansion == 1: return "Créer le grand dépôt · %d billets" % sim.cfg.v("expansion_prices")[1]
 	for id in ["electric","plumbing"]:
-		if not sim.opened[id]: return "Ouvrir : %s · %d pièces" % [sim.cfg.family(id).name,sim.cfg.family(id).unlock]
+		if not sim.opened[id]: return "Ouvrir : %s · %d billets" % [sim.cfg.family(id).name,sim.cfg.family(id).unlock]
 	if sim.franchise_ready(): return "Franchise prête : +%d %% de ventes à vie" % int(round((sim.franchise_multiplier()+sim.cfg.v("franchise_step")-1)*100))
 	var total: int = sim.cfg.v("achievements").size()
 	if sim.achievements.size() < total: return "Succès : %d/%d débloqués" % [sim.achievements.size(),total]

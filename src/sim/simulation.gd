@@ -167,7 +167,7 @@ func daily_text() -> String:
 	var what := ""
 	match daily.kind:
 		"family": what = "Vendre %d articles %s" % [daily.goal,cfg.family(daily.family).get("name","").to_lower()]
-		"revenue": what = "Encaisser %d pièces" % daily.goal
+		"revenue": what = "Encaisser %d billets" % daily.goal
 		"happy": what = "Satisfaire %d clients" % daily.goal
 		"vip": what = "Servir %d clients VIP" % daily.goal
 	return what

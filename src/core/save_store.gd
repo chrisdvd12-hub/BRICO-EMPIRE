@@ -28,6 +28,10 @@ func read_file(file_path: String) -> Dictionary:
 		parsed.observed_rate = {}
 	return parsed
 func load_data() -> Dictionary:
+	if OS.has_feature("web"):
+		for key in ["brico.save.v2:"+path,"brico.save.v2:"+path+".bak"]:
+			var local := BricoBrowserStore.read(key)
+			if valid(local): return local
 	var result := read_file(path)
 	if not result.is_empty(): return result
 	if FileAccess.file_exists(path):
@@ -36,6 +40,10 @@ func load_data() -> Dictionary:
 		if result.is_empty(): warning = "Sauvegardes illisibles : nouvelle partie démarrée."
 	return result
 func write(data: Dictionary) -> bool:
+	if OS.has_feature("web"):
+		var ok := valid(data) and BricoBrowserStore.write("brico.save.v2:"+path,data)
+		if not ok: warning = "Le navigateur refuse l’enregistrement local. Exporte ta sauvegarde."
+		return ok
 	var tmp := path + ".tmp"
 	var f := FileAccess.open(tmp,FileAccess.WRITE)
 	if f == null:
@@ -63,5 +71,6 @@ func offline_amount(data: Dictionary, now: int, cfg: BricoConfig) -> Dictionary:
 	result.amount = int(floor(result.rate * result.seconds))
 	return result
 func reset():
+	if OS.has_feature("web"): BricoBrowserStore.erase("brico.save.v2:"+path)
 	for suffix in ["", ".bak", ".tmp"]:
 		if FileAccess.file_exists(path+suffix): DirAccess.remove_absolute(path+suffix)

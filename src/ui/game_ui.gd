@@ -4,6 +4,8 @@ signal save_requested
 signal reset_requested
 signal speed_changed(value: float)
 signal import_requested(code: String)
+signal profile_requested
+var player_name := "Joueur"
 var sim: BricoSimulation
 var view
 var root: Control
@@ -26,11 +28,11 @@ var toast_label: Label
 var toast_timer := 0.0
 var confirm_reset := false
 var dev := false
-const TEAL := Color("174956")
-const PAPER := Color("fff5e2")
+const TEAL := Color("006c82")
+const PAPER := Color("fffdf5")
 const MUTED := Color("526b68")
 # Shared navigation palette; purchase and warning states retain semantic colours.
-const KINDS := {"nav":["174956","fff5e2"],"buy":["2f9e6a","ffffff"],"build":["2f9e6a","ffffff"],"team":["e8893a","ffffff"],"trophy":["f2c14e","4a3306"],"options":["5b6f7a","ffffff"],"camera":["2f7fd0","ffffff"],"close":["d9634c","ffffff"],"skip":["ffffff","174956"],"danger":["c2492f","ffffff"],"default":["174956","fff5e2"],"maxed":["f2c14e","4a3306"],"stats":["8c6bc4","ffffff"],"gold":["e0a526","3b2a05"]}
+const KINDS := {"nav":["007c9c","ffffff"],"buy":["2f9e6a","ffffff"],"build":["2f9e6a","ffffff"],"team":["e8893a","ffffff"],"trophy":["f2c14e","4a3306"],"options":["5b6f7a","ffffff"],"camera":["2f7fd0","ffffff"],"close":["d9634c","ffffff"],"skip":["ffffff","174956"],"danger":["c2492f","ffffff"],"default":["174956","fff5e2"],"maxed":["f2c14e","4a3306"],"stats":["8c6bc4","ffffff"],"gold":["e0a526","3b2a05"]}
 var styles := {}
 var bold: FontVariation
 var build_button: Button
@@ -65,31 +67,37 @@ func setup(simulation: BricoSimulation, store_view, developer: bool):
 		theme.set_stylebox(state,"Button",style)
 	root.theme = theme
 	bold = FontVariation.new(); bold.base_font = preload("res://assets/fonts/Fredoka-Semibold.ttf")
-	var header := panel_at(Vector2(12,12),Vector2(516,184),PAPER)
+	var header := panel_at(Vector2(12,12),Vector2(516,150),PAPER)
 	header_panel = header
-	var top := VBoxContainer.new(); top.add_theme_constant_override("separation",3); header.add_child(top)
-	title_label = label("BRICO EMPIRE     /     ATELIER 01",16); top.add_child(title_label)
+	var top := VBoxContainer.new(); top.add_theme_constant_override("separation",2); header.add_child(top)
+	title_label = label("BRICO EMPIRE     /     ATELIER 01",14); top.add_child(title_label)
 	var money_row := HBoxContainer.new(); top.add_child(money_row)
 	money_row.add_theme_constant_override("separation",8)
-	money_label = label("",29); money_label.autowrap_mode = TextServer.AUTOWRAP_OFF; money_label.clip_text = true; money_label.custom_minimum_size.x = 180; money_label.add_theme_font_override("font",bold); money_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; money_row.add_child(money_label)
-	money_row.add_child(icon_button("stats","Statistiques",func(): open_sheet("stats","")))
-	var center := icon_button("center","Recentrer",view.recenter); money_row.add_child(center)
+	var wallet := PanelContainer.new(); wallet.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var wallet_style := StyleBoxFlat.new(); wallet_style.bg_color = Color("e6ffd1"); wallet_style.border_color = Color("00a956"); wallet_style.set_border_width_all(2); wallet_style.set_corner_radius_all(16); wallet_style.content_margin_left = 10; wallet_style.content_margin_right = 8
+	wallet.add_theme_stylebox_override("panel",wallet_style); money_row.add_child(wallet)
+	var cash_row := HBoxContainer.new(); cash_row.add_theme_constant_override("separation",8); wallet.add_child(cash_row)
+	var cash_icon := TextureRect.new(); cash_icon.texture = preload("res://assets/ui/banknote.svg"); cash_icon.custom_minimum_size = Vector2(40,38); cash_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE; cash_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED; cash_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE; cash_row.add_child(cash_icon)
+	money_label = label("",29); money_label.autowrap_mode = TextServer.AUTOWRAP_OFF; money_label.clip_text = true; money_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; money_label.custom_minimum_size.x = 100; money_label.add_theme_font_override("font",bold); cash_row.add_child(money_label)
+	var stats_button := icon_button("stats","Statistiques",func(): open_sheet("stats","")); stats_button.custom_minimum_size = Vector2(56,56); money_row.add_child(stats_button)
+	var center := icon_button("center","Recentrer",view.recenter); center.custom_minimum_size = Vector2(56,56); money_row.add_child(center)
 	var settings := icon_button("settings","Paramètres",func(): open_sheet("settings",""))
-	settings.add_theme_constant_override("icon_max_width",30)
+	settings.custom_minimum_size = Vector2(56,56)
+	settings.add_theme_constant_override("icon_max_width",28)
 	nav_buttons["settings"] = settings
 	money_row.add_child(settings)
-	objective = label("",21); top.add_child(objective)
-	status = label("",18); top.add_child(status)
+	objective = label("",20); top.add_child(objective)
+	status = label("",16); top.add_child(status)
 	# Header lines never wrap: a long objective must not push the status out of the panel.
 	for l in [title_label,objective,status]:
 		l.autowrap_mode = TextServer.AUTOWRAP_OFF; l.clip_text = true; l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	var bottom := panel_at(Vector2(12,782),Vector2(516,166),PAPER)
+	var bottom := panel_at(Vector2(12,818),Vector2(516,130),PAPER)
 	bottom_panel = bottom
 	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	bottom.offset_left = 12; bottom.offset_right = -12; bottom.offset_top = -178; bottom.offset_bottom = -12
-	var bottom_box := VBoxContainer.new(); bottom_box.add_theme_constant_override("separation",8); bottom.add_child(bottom_box)
-	advice = label("",20); advice.max_lines_visible = 2; advice.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS; bottom_box.add_child(advice)
-	goal_bar = ProgressBar.new(); goal_bar.custom_minimum_size.y = 6; goal_bar.show_percentage = false; goal_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bottom.offset_left = 12; bottom.offset_right = -12; bottom.offset_top = -142; bottom.offset_bottom = -12
+	var bottom_box := VBoxContainer.new(); bottom_box.add_theme_constant_override("separation",6); bottom.add_child(bottom_box)
+	advice = label("",18); advice.max_lines_visible = 1; advice.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS; bottom_box.add_child(advice)
+	goal_bar = ProgressBar.new(); goal_bar.custom_minimum_size.y = 5; goal_bar.show_percentage = false; goal_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var track := StyleBoxFlat.new(); track.bg_color = Color("d8e4d6"); track.set_corner_radius_all(3)
 	var fill := StyleBoxFlat.new(); fill.bg_color = Color("438e80"); fill.set_corner_radius_all(3)
 	goal_bar.add_theme_stylebox_override("background",track); goal_bar.add_theme_stylebox_override("fill",fill)
@@ -103,12 +111,12 @@ func setup(simulation: BricoSimulation, store_view, developer: bool):
 			build_button = b
 			b.draw.connect(draw_build_badge)
 		menu.add_child(b)
-	tutorial_box = panel_at(Vector2(12,208),Vector2(516,100),Color("e3eed5"))
+	tutorial_box = panel_at(Vector2(12,174),Vector2(516,76),Color("d8ffad"))
 	var tuto := HBoxContainer.new(); tutorial_box.add_child(tuto)
-	tutorial_label = label("",20); tutorial_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; tuto.add_child(tutorial_label)
-	var skip := button("Passer",func(): sim.tutorial = 5; save_requested.emit(),"skip"); skip.custom_minimum_size.x = 120; tuto.add_child(skip)
+	tutorial_label = label("",18); tutorial_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; tuto.add_child(tutorial_label)
+	var skip := button("Passer",func(): sim.tutorial = 5; save_requested.emit(),"skip"); skip.custom_minimum_size = Vector2(110,48); skip.add_theme_font_size_override("font_size",20); tuto.add_child(skip)
 	toast_label = label("",18)
-	toast_label.position = Vector2(24,316); toast_label.size = Vector2(492,0)
+	toast_label.position = Vector2(24,258); toast_label.size = Vector2(492,0)
 	toast_label.add_theme_color_override("font_color",PAPER)
 	var toast_style := StyleBoxFlat.new(); toast_style.bg_color = Color(0.06,.2,.24,.88); toast_style.set_corner_radius_all(12)
 	toast_style.content_margin_left = 12; toast_style.content_margin_right = 12; toast_style.content_margin_top = 8; toast_style.content_margin_bottom = 8
@@ -118,13 +126,13 @@ func setup(simulation: BricoSimulation, store_view, developer: bool):
 	view.ui_blocks_point = blocks_store_point
 	view.selected.connect(open_sheet)
 	sim.achieved.connect(func(a):
-		show_toast("Succès débloqué : %s · +%d pièces" % [a.name,a.reward])
+		show_toast("Succès débloqué : %s · +%d billets" % [a.name,a.reward])
 		show_tip("achievements","Ouvrez « Succès » pour suivre tous les objectifs, dont l’objectif du jour."))
 	sim.event_started.connect(func(e):
 		show_toast("%s ! %s" % [e.name,e.text])
 		show_tip("events","Les événements durent quelques secondes : profitez-en pour avoir des rayons bien remplis."))
-	sim.daily_completed.connect(func(d): show_toast("Objectif du jour réussi ! +%d pièces" % d.reward))
-	sim.new_day.connect(func(d): show_toast("Jour %d · Objectif du jour : %s (+%d pièces)" % [d,sim.daily_text(),sim.daily.reward]))
+	sim.daily_completed.connect(func(d): show_toast("Objectif du jour réussi ! +%d billets" % d.reward))
+	sim.new_day.connect(func(d): show_toast("Jour %d · Objectif du jour : %s (+%d billets)" % [d,sim.daily_text(),sim.daily.reward]))
 	sim.franchised.connect(func(level): show_toast("Atelier %02d ouvert ! Toutes les ventes rapportent +%d %% pour toujours." % [level+1,int(round((sim.franchise_multiplier()-1)*100))]))
 	root.resized.connect(apply_safe_area)
 	apply_safe_area()
@@ -150,7 +158,7 @@ func icon_button(id: String, title: String, callback: Callable) -> Button:
 	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	b.expand_icon = true
 	b.add_theme_constant_override("icon_max_width",40)
-	b.custom_minimum_size = Vector2(72,72)
+	b.custom_minimum_size = Vector2(64,64)
 	b.tooltip_text = title
 	b.accessibility_name = title
 	return b
@@ -187,7 +195,7 @@ func cta_style(kind: String, state: String, compact: bool) -> StyleBox:
 	s.content_margin_left = 4 if compact else 14; s.content_margin_right = s.content_margin_left
 	s.content_margin_top = 12 if pressed else 8; s.content_margin_bottom = 6
 	if state != "disabled" and not pressed:
-		s.shadow_color = Color(0,0,0,.18); s.shadow_size = 4; s.shadow_offset = Vector2(0,3)
+		s.shadow_size = 0
 	styles[key] = s
 	return s
 func style_button(b: Button, kind: String, compact := false):
@@ -202,7 +210,7 @@ func style_button(b: Button, kind: String, compact := false):
 func panel_at(at: Vector2, dimensions: Vector2, color: Color) -> PanelContainer:
 	var panel := PanelContainer.new(); panel.position = at; panel.size = dimensions
 	var style := StyleBoxFlat.new(); style.bg_color = color; style.set_corner_radius_all(20)
-	style.shadow_color = Color(0.04,.16,.18,.13); style.shadow_size = 8; style.shadow_offset = Vector2(0,3)
+	style.shadow_size = 0
 	style.content_margin_left = 16; style.content_margin_right = 16; style.content_margin_top = 12; style.content_margin_bottom = 12
 	panel.add_theme_stylebox_override("panel",style)
 	root.add_child(panel)
@@ -252,13 +260,13 @@ func open_sheet(kind: String, id: String):
 		"shelf":
 			if not sim.opened[id]:
 				content.add_child(label("Livraisons gratuites et emplacement fixe. Le réassort commencera dès la prochaine livraison."))
-				purchase_row("unlock",id,"Ouvrir ce rayon",func(): return "%d pièces par vente · capacité %d" % [sim.sale_value(id),sim.capacity(id)])
+				purchase_row("unlock",id,"Ouvrir ce rayon",func(): return "%d billets par vente · capacité %d" % [sim.sale_value(id),sim.capacity(id)])
 			else:
 				live(func(): return "En rayon : %d/%d · Réserve : %d/%d" % [sim.inventory.shelves[id],sim.capacity(id),sim.inventory.reserve[id],sim.reserve_capacity()])
 				purchase_row("shelf_capacity",id,"Capacité",func(): return "Niv. %d/5 · %d à %d unités" % [sim.levels[id].capacity,sim.capacity(id),sim.capacity(id)+sim.cfg.v("capacity_step")])
 				purchase_row("shelf_value",id,"Valeur des produits",func():
 					var next_value := int(round(sim.cfg.family(id).price*(1.0+sim.levels[id].value*sim.cfg.v("value_step"))))
-					return "Niv. %d/5 · %d à %d pièces / vente" % [sim.levels[id].value,sim.sale_value(id),next_value])
+					return "Niv. %d/5 · %d à %d billets / vente" % [sim.levels[id].value,sim.sale_value(id),next_value])
 				purchase_row("shelf_service",id,"Prise du produit",func(): return "Niv. %d/5 · %.1f à %.1f s" % [sim.levels[id].service,sim.pick_time(id),sim.pick_time(id)*sim.cfg.v("speed_factor")])
 		"workers":
 			live(func():
@@ -292,14 +300,14 @@ func open_sheet(kind: String, id: String):
 			content.add_child(label("Le grand dépôt porte la réserve à 48 unités par famille. Après rechargement, les marchandises en transit sont récupérées ici ; un dépassement temporaire est possible.",17))
 		"build", "expand":
 			for f in sim.cfg.families:
-				if not sim.opened[f.id]: purchase_row("unlock",f.id,"Ouvrir : " + f.name,func(): return "Vente : %d pièces · %d unités en rayon" % [sim.sale_value(f.id),sim.capacity(f.id)])
+				if not sim.opened[f.id]: purchase_row("unlock",f.id,"Ouvrir : " + f.name,func(): return "Vente : %d billets · %d unités en rayon" % [sim.sale_value(f.id),sim.capacity(f.id)])
 			purchase_row("expand","","Agrandissement %d/2" % mini(2,sim.expansion+1),func(): return "Nouvelle aile : surface jardinage + réception" if sim.expansion == 0 else "Grand dépôt : réserve 24 à 48 ; rayons +4 ; électricité et plomberie")
 			if sim.checkouts < 2: purchase_row("checkout","","Deuxième caisse",func(): return "Caissier inclus · une file supplémentaire")
 			content.add_child(label("DÉCORATION · améliore la note du magasin",17))
 			for item in sim.cfg.v("decor"):
 				purchase_row("decor",item.id,item.name,func(): return "%s · note +%.2f" % [item.text,item.rating])
 			content.add_child(label("FRANCHISE",17))
-			live(func(): return "Atelier %02d · bonus de vente actuel +%d %%. Une franchise ouvre un nouvel atelier : magasin, rayons, équipe, déco et argent repartent de zéro (+%d pièces de départ) ; succès, statistiques et bonus restent, et le bonus grimpe de %d %%." % [sim.franchise_level+1,int(round((sim.franchise_multiplier()-1)*100)),(sim.franchise_level+1)*sim.cfg.v("franchise_start_bonus"),int(sim.cfg.v("franchise_step")*100)])
+			live(func(): return "Atelier %02d · bonus de vente actuel +%d %%. Une franchise ouvre un nouvel atelier : magasin, rayons, équipe, déco et argent repartent de zéro (+%d billets de départ) ; succès, statistiques et bonus restent, et le bonus grimpe de %d %%." % [sim.franchise_level+1,int(round((sim.franchise_multiplier()-1)*100)),(sim.franchise_level+1)*sim.cfg.v("franchise_start_bonus"),int(sim.cfg.v("franchise_step")*100)])
 			var franchise_button := button("",func():
 				if not sim.progression.reason("franchise").is_empty(): show_toast(sim.progression.reason("franchise")); return
 				if not confirm_franchise:
@@ -318,15 +326,15 @@ func open_sheet(kind: String, id: String):
 			live_labels.append([daily_title,func():
 				daily_bar.max_value = maxi(1,int(sim.daily.get("goal",1))); daily_bar.value = int(sim.daily.get("progress",0))
 				if sim.daily.get("done",false): return "OBJECTIF DU JOUR RÉUSSI · revenez demain"
-				return "OBJECTIF DU JOUR · %s · %d/%d · +%d pièces" % [sim.daily_text(),sim.daily.progress,sim.daily.goal,sim.daily.reward]])
-			live(func(): return "%d/%d débloqués · %d pièces gagnées en récompenses" % [sim.achievements.size(),sim.cfg.v("achievements").size(),sim.achievement_rewards])
+				return "OBJECTIF DU JOUR · %s · %d/%d · +%d billets" % [sim.daily_text(),sim.daily.progress,sim.daily.goal,sim.daily.reward]])
+			live(func(): return "%d/%d débloqués · %d billets gagnées en récompenses" % [sim.achievements.size(),sim.cfg.v("achievements").size(),sim.achievement_rewards])
 			for a in sim.cfg.v("achievements"):
 				var group := VBoxContainer.new(); group.add_theme_constant_override("separation",2); content.add_child(group)
 				var done: bool = sim.achievements.has(a.id)
 				var name_label := label(("OBTENU · " if done else "") + a.name,21)
 				if done: name_label.add_theme_color_override("font_color",Color("2f7d55"))
 				group.add_child(name_label)
-				group.add_child(label("%s · récompense %d pièces" % [a.text,a.reward],17))
+				group.add_child(label("%s · récompense %d billets" % [a.text,a.reward],17))
 				if not done:
 					var bar := progress_bar(Color("f2aa56")); bar.max_value = a.goal
 					group.add_child(bar)
@@ -335,6 +343,8 @@ func open_sheet(kind: String, id: String):
 						var v: int = mini(sim.stat(a.stat),a.goal); bar.value = v
 						return "%d / %d" % [v,a.goal]])
 		"settings":
+			content.add_child(label("PARTIE DE « %s »" % player_name,22))
+			content.add_child(button("Changer de joueur",func(): profile_requested.emit(),"nav"))
 			var sound := CheckButton.new(); sound.text = "Sons"; sound.button_pressed = sim.settings.sound; sound.custom_minimum_size.y = 72; content.add_child(sound)
 			sound.toggled.connect(func(enabled): sim.settings.sound = enabled; save_requested.emit())
 			var music := CheckButton.new(); music.text = "Musique d’ambiance"; music.button_pressed = sim.settings.music; music.custom_minimum_size.y = 72; content.add_child(music)
@@ -412,13 +422,13 @@ func stats_sheet():
 			var x := (16 - values.size() + i) * w
 			var color := Color("8c6bc4") if i == values.size()-1 else Color("2f9e6a")
 			chart.draw_rect(Rect2(x+3,130-h,w-6,h),color)
-		chart.draw_string(bold,Vector2(0,148),"max %d pièces/min · barre violette : minute en cours" % top,HORIZONTAL_ALIGNMENT_LEFT,-1,14,MUTED))
+		chart.draw_string(bold,Vector2(0,148),"max %d billets/min · barre violette : minute en cours" % top,HORIZONTAL_ALIGNMENT_LEFT,-1,14,MUTED))
 	var redraw_driver := label("")
 	redraw_driver.hide()
 	content.add_child(redraw_driver)
 	live_labels.append([redraw_driver,func(): chart.queue_redraw(); stars.queue_redraw(); return ""])
 	live(func():
-		var lines := "Ventes : %d clients · %s pièces encaissées\nAujourd’hui : %s pièces · meilleur jour : %s pièces\nClients satisfaits : %d · VIP servis : %d · objectifs du jour : %d" % [sim.total_sales,format_money(sim.total_revenue),format_money(sim.day_revenue),format_money(maxi(sim.best_day,sim.day_revenue)),sim.happy_served,sim.vip_served,sim.dailies_done]
+		var lines := "Ventes : %d clients · %s billets encaissées\nAujourd’hui : %s billets · meilleur jour : %s billets\nClients satisfaits : %d · VIP servis : %d · objectifs du jour : %d" % [sim.total_sales,format_money(sim.total_revenue),format_money(sim.day_revenue),format_money(maxi(sim.best_day,sim.day_revenue)),sim.happy_served,sim.vip_served,sim.dailies_done]
 		var best := ""; var best_n := -1
 		for f in sim.cfg.families:
 			if int(sim.family_sales.get(f.id,0)) > best_n: best_n = int(sim.family_sales.get(f.id,0)); best = f.name
@@ -452,7 +462,7 @@ func purchase_row(action: String, target: String, title: String, effect: Callabl
 func developer_controls():
 	content.add_child(label("DÉVELOPPEUR · --dev",21))
 	for n in [1,4,16]: content.add_child(button("Simulation ×%d" % n,func(): speed_changed.emit(float(n))))
-	content.add_child(button("Ajouter 5 000 pièces",func(): sim.money += 5000; save_requested.emit()))
+	content.add_child(button("Ajouter 5 000 billets",func(): sim.money += 5000; save_requested.emit()))
 	content.add_child(button("États des agents",func(): view.debug_states = not view.debug_states))
 	content.add_child(button("Ouvrir l’étape suivante",func():
 		var action := "unlock"; var target := "paint"
@@ -466,26 +476,27 @@ func developer_controls():
 	live(func(): return "Audit stock : %d (attendu 0)\nTâches : %s\nStocks : %s\nClients : %d/%d" % [sim.stock_audit(),str(sim.tasks),str(sim.inventory.shelves),sim.customers.size(),sim.cfg.v("max_clients")])
 func refresh():
 	if not is_instance_valid(money_label): return
-	money_label.text = "%s pièces" % format_money(sim.money)
+	money_label.text = format_money(sim.money)
+	money_label.tooltip_text = "%s billets · %s" % [format_money(sim.money),player_name]
 	objective.text = sim.progression.objective()
 	var rpm := sim.measured_rpm()
 	var hour := sim.day_hour()
-	title_label.text = "BRICO EMPIRE  /  ATELIER %02d  ·  JOUR %d  ·  %02d h %02d" % [sim.franchise_level+1,sim.day_number(),int(hour),int(fmod(hour,1.0)*6)*10]
+	title_label.text = "%s  ·  ATELIER %02d  ·  JOUR %d" % [player_name,sim.franchise_level+1,sim.day_number()]
 	if not sim.event.is_empty():
 		status.text = "%s · encore %d s · %d clients" % [sim.event.name,ceili(sim.event_left),sim.customers.size()]
 		status.add_theme_color_override("font_color",Color("c2492f"))
 	else:
-		status.text = "Note %.1f/5 · %s · %d clients" % [sim.rating(),"mesure des ventes…" if rpm < 0 else "%.0f pièces/min" % rpm,sim.customers.size()]
+		status.text = "Note %.1f/5 · %s · %d clients" % [sim.rating(),"mesure des ventes…" if rpm < 0 else "%.0f billets/min" % rpm,sim.customers.size()]
 		status.remove_theme_color_override("font_color")
 	var goal := sim.progression.next_goal()
 	goal_bar.visible = not goal.is_empty()
 	if not goal.is_empty():
 		goal_bar.max_value = goal.cost; goal_bar.value = mini(sim.money,goal.cost)
-		goal_bar.tooltip_text = "%d / %d pièces pour le prochain palier" % [mini(sim.money,goal.cost),goal.cost]
+		goal_bar.tooltip_text = "%d / %d billets pour le prochain palier" % [mini(sim.money,goal.cost),goal.cost]
 	advice.text = sim.advice
 	# Calm moments show the daily objective instead of generic advice.
 	if sim.advice.begins_with("L’activité est fluide") and not sim.daily.is_empty() and not sim.daily.done:
-		advice.text = "Objectif du jour : %s · %d/%d · +%d pièces" % [sim.daily_text(),sim.daily.progress,sim.daily.goal,sim.daily.reward]
+		advice.text = "Objectif du jour : %s · %d/%d · +%d billets" % [sim.daily_text(),sim.daily.progress,sim.daily.goal,sim.daily.reward]
 	if sim.tutorial >= 5:
 		show_tip("world","Glissez pour explorer le quartier ; la cible recentre le magasin, le graphique montre la note.")
 	if sim.outcomes.size() >= 10 and sim.satisfaction_rating() < 3.0:
@@ -493,15 +504,15 @@ func refresh():
 	if sim.franchise_ready():
 		show_tip("franchise","Franchise disponible dans « Construire » : nouvel atelier avec un bonus de vente permanent.")
 	tutorial_box.visible = sim.tutorial < 5
-	toast_label.position.y = 320 if tutorial_box.visible else 205
-	var steps := ["1/5 · Observez une vente : un client prend un produit, puis paie.","2/5 · Touchez le rayon outillage pour voir ses améliorations.","3/5 · Achetez une amélioration. La première coûte 100 pièces.","4/5 · Observez l’employé : il transporte un carton de la réserve au rayon.","5/5 · Prochain objectif : la peinture, 300 pièces. Touchez ici pour terminer."]
+	toast_label.position.y = 258 if tutorial_box.visible else 174
+	var steps := ["1/5 · Observez un client prendre un produit, puis payer.","2/5 · Touchez le rayon outillage et ses améliorations.","3/5 · Améliorez le rayon dès 100 billets.","4/5 · Suivez le carton de la réserve au rayon.","5/5 · Objectif peinture : 300 billets. Touchez ici pour finir."]
 	if sim.tutorial < 5: tutorial_label.text = steps[sim.tutorial]
 	for row in rows:
 		var why: String = sim.progression.reason(row.action,row.target)
 		var maxed := why in ["Niveau maximal","Équipe au complet","Magasin entièrement agrandi","Les deux caisses sont ouvertes","Déjà installé"]
 		if row.action == "decor": row.detail.text = row.effect.call()
 		else: row.detail.text = str(row.effect.call()).split(" à ")[0] + " · au maximum" if maxed else row.effect.call()
-		row.button.text = ("Installé" if why == "Déjà installé" else "Niveau maximal") if maxed else "Acheter · %d pièces" % sim.progression.cost(row.action,row.target)
+		row.button.text = ("Installé" if why == "Déjà installé" else "Niveau maximal") if maxed else "Acheter · %d billets" % sim.progression.cost(row.action,row.target)
 		row.button.disabled = not why.is_empty()
 		style_button(row.button,"maxed" if maxed else "buy")
 		row.reason.text = why

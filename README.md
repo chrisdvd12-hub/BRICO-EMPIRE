@@ -4,29 +4,19 @@ Première version jouable d’un jeu de gestion mobile en français. Les clients
 
 **Moteur : Godot 4.6.3 stable, GDScript, rendu Compatibility.** Aucun module externe, serveur, compte, publicité ou achat intégré. Cible Android/iOS portrait ; développement et tests sur Linux.
 
-## Version 3D — branche migration-3d
+## Version cartoon et profils locaux
 
-**[Jouer à la version 3D de test](https://brico-empire-5arh2o96d-chrisdvd12-1767.vercel.app)** — déploiement Vercel READY du commit b948a04, accès susceptible de demander la connexion Vercel du propriétaire. Le lien de production plus bas sert encore la version 2D.
+Couleurs vives, aucune ombre portée, personnages aux proportions plus cartoon, nouvelle enseigne montée avec logo, billets animés à l’encaissement et compteur avec icône en haut à gauche. Le chargement utilise le visuel C choisi par le propriétaire et une progression réelle.
 
-La scène courante utilise une vraie géométrie 3D Godot : caméra orthographique, éclairage, ombres, meubles, produits et personnages articulés. La simulation, la grille de navigation projetée sur XZ et la sauvegarde v2 sont conservées. Les modèles sont construits par le code original de `src/view3d/` ; aucun modèle payant ou service distant.
+Au démarrage : **Qui joue ?** Créez ou sélectionnez un des six profils locaux. Dans les paramètres : **Changer de joueur**. Chacun garde sa boutique ; l’ancienne sauvegarde est copiée dans « Joueur 1 ». Ce sont des profils sur cet appareil et ce domaine, sans compte ni sauvegarde cloud. Voir [le bilan](docs/CARTOON.md).
 
-Importer `project.godot` avec **Godot 4.6.3 standard**, puis F5. Pour le navigateur : `python3 tools/serve_web.py`, puis http://localhost:8000. Le dossier `web/` contient l’export complet. `godot --path . -- --legacy-2d` lance la présentation 2D conservée pour comparaison.
+## Jouer sur Safari
 
-Le mode graphique allégé se règle via l’engrenage en haut à droite : ombres coupées et résolution 3D à 75 %, interface à sa résolution normale. Voir [la migration 3D et ses tests](docs/3D.md). Les liens publics ne doivent être considérés à jour qu’après vérification du déploiement.
+**[Ouvrir Brico Empire](https://brico-empire.vercel.app)**
 
-![Magasin 3D](docs/14-3d-magasin.png)
+La livraison cartoon et profils remplace la présentation précédente lors du déploiement vérifié. Les liens de prévisualisation anciens sont des versions figées : privilégier ce lien public. Safari 16.4+ avec WebGL 2 est requis ; cette version est vérifiée sous Chromium, pas encore sur un iPad réel.
 
-## Refonte visuelle et tactile
-
-Rayons 40 % plus larges, capacité de base de 12 unités ; mobilier propre à chaque famille, façade vitrée avec auvent, police arrondie Fredoka embarquée sous licence OFL, tenues des employés différenciées et effets d’ouverture. Trois pictogrammes bleu pétrole en bas ; petit engrenage des paramètres en haut à droite. Caméra bornée à la propriété, gestes tactiles et panneaux adaptés aux écrans étroits, jauge d’épargne vers le prochain palier. Les parties existantes conservent leurs stocks et améliorations.
-
-Voir [le bilan de cette refonte](docs/3D.md), ses mesures et ses limites de validation mobile.
-
-## Ancien lien de production 2D sur Safari
-
-**[Ouvrir Brico Empire sur Vercel](https://brico-empire.vercel.app)**
-
-Hébergement HTTPS actif sur Vercel, accès public vérifié. L’ancien [lien Sites](https://brico-empire-jeu.vividmug7.chatgpt.site) reste disponible avec le compte ChatGPT propriétaire. Pour conserver une partie commencée sur ce lien, utiliser Options → Copier ma sauvegarde, puis charger ce code sur Vercel. Premier chargement : environ 10 Mo. Safari 16.4+ avec WebGL 2 est requis ; l’export a été testé sous Chromium, pas encore sur un iPad réel. La sauvegarde reste dans les données du navigateur.
+Les parties sont locales au navigateur et au domaine. Utiliser **Paramètres → Copier ma sauvegarde** avant de changer de domaine ou d’effacer les données du site, puis importer le code dans le profil voulu.
 
 ## Jouer dans un navigateur (export fourni)
 
@@ -43,9 +33,9 @@ py tools/serve_web.py
 
 3. Ouvrir **http://localhost:8000** dans Chrome/Edge récent ou Safari 16.4+. Ne pas ouvrir `index.html` en double-cliquant : le moteur a besoin d’un serveur HTTP.
 
-Premier téléchargement : environ **10 Mo** de moteur et de données. Le serveur Python est destiné au test local. Pour jouer sur iPad depuis un lien, héberger le dossier `web/` en **HTTPS** ; le jeu exige un contexte sécurisé. Une adresse HTTP du PC sur le réseau local ne suffit pas. Aucun lien de mise en ligne n’est annoncé sans déploiement confirmé.
+Premier téléchargement : environ **12 Mo** de moteur et de données. Le serveur Python est destiné au test local. Pour jouer sur iPad depuis un lien, héberger le dossier `web/` en **HTTPS** ; le jeu exige un contexte sécurisé. Une adresse HTTP du PC sur le réseau local ne suffit pas. Aucun lien de mise en ligne n’est annoncé sans déploiement confirmé.
 
-La sauvegarde web reste dans le navigateur (IndexedDB), sur cette origine. Elle est distincte de la sauvegarde PC et peut disparaître si les données du site sont effacées ou en navigation privée.
+La sauvegarde web reste dans le stockage local du navigateur (ancienne partie IndexedDB migrée), sur cette origine. Elle est distincte de la sauvegarde PC et peut disparaître si les données du site sont effacées ou en navigation privée.
 
 ## Jouer sur ordinateur
 

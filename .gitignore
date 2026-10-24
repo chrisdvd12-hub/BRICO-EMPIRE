@@ -17,3 +17,6 @@ web/game.wasm
 # Import metadata for generated exports and QA screenshots.
 docs/*.import
 web/*.import
+
+# QA and design imports are regenerated locally.
+docs/**/*.import

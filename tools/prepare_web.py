@@ -29,6 +29,10 @@ loader = '''<script>
 '''
 html = web / 'game.html'
 text = html.read_text()
+if "type:'brico-progress'" not in text:
+    text = text.replace("'onProgress': function (current, total) {", "'onProgress': function (current, total) {\n                window.parent.postMessage({type:'brico-progress',current,total},location.origin);")
+if "type:'brico-error'" not in text:
+    text = text.replace("function displayFailureNotice(err) {", "function displayFailureNotice(err) {\n        window.parent.postMessage({type:'brico-error'},location.origin);")
 text = text.replace('<html lang="en">','<html lang="fr">')
 text = text.replace('\tdisplay: block;\n', '\tdisplay: block; touch-action: none; -webkit-user-select: none; user-select: none;\n')
 if '// Official Godot WASM' not in text:

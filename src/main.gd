@@ -12,11 +12,44 @@ var developer := false
 var legacy_2d := false
 var offline_notice := ""
 var sale_save_pending := false
+var profiles: BricoProfiles
+var picker: BricoProfilePicker
+var choosing := false
+var smoke := false
 func _ready():
 	developer = "--dev" in OS.get_cmdline_user_args()
 	legacy_2d = legacy_2d or "--legacy-2d" in OS.get_cmdline_user_args()
-	if "--smoke" in OS.get_cmdline_user_args(): save_store = BricoSaveStore.new("user://smoke_save.json")
-	start_game()
+	smoke = "--smoke" in OS.get_cmdline_user_args()
+	if smoke:
+		save_store = BricoSaveStore.new("user://smoke_save.json"); start_game()
+	else:
+		profiles = BricoProfiles.new(); show_profiles()
+	announce_web_ready()
+func announce_web_ready():
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("window.parent.postMessage({type:'brico-ready'}, window.location.origin)")
+func show_profiles():
+	if smoke or is_instance_valid(picker): return
+	if sim != null:
+		if not save_store.write(sim.snapshot(int(Time.get_unix_time_from_system()))):
+			ui.show_toast("Changement annulé : la partie n’a pas pu être enregistrée."); return
+	suspended = true
+	picker = BricoProfilePicker.new(); add_child(picker); picker.setup(profiles)
+	picker.player_chosen.connect(choose_profile)
+func choose_profile(id: String):
+	if choosing: return
+	if not profiles.select_player(id): picker.message.text = "Impossible d’ouvrir ce profil."; return
+	choosing = true
+	save_store = profiles.store_for(id)
+	if is_instance_valid(picker): picker.queue_free()
+	picker = null
+	if is_instance_valid(view): view.queue_free()
+	if is_instance_valid(ui): ui.queue_free()
+	if has_node("Audio"): get_node("Audio").queue_free()
+	call_deferred("start_profile")
+func start_profile():
+	sim = null; accumulator = 0; save_timer = 0; speed = 1; sale_save_pending = false; offline_notice = ""
+	suspended = false; choosing = false; start_game()
 func start_game():
 	sim = BricoSimulation.new()
 	var data := save_store.load_data()
@@ -26,7 +59,8 @@ func start_game():
 		apply_offline(data,now)
 	view = BricoStoreView.new() if legacy_2d else BricoStore3DView.new()
 	view.setup(sim); add_child(view)
-	ui = BricoGameUI.new(); add_child(ui); ui.setup(sim,view,developer)
+	ui = BricoGameUI.new(); ui.player_name = profiles.player_name() if profiles != null else "Test"; add_child(ui); ui.setup(sim,view,developer)
+	ui.profile_requested.connect(show_profiles)
 	var audio := BricoAudio.new(); audio.name = "Audio"; add_child(audio); audio.setup(sim)
 	ui.save_requested.connect(save_game)
 	ui.reset_requested.connect(reset_game)
@@ -43,7 +77,7 @@ func apply_offline(data: Dictionary, now: int):
 	sim.money += estimate.amount
 	# Persist before presenting reward; reloading cannot credit the same absence twice.
 	if save_store.write(sim.snapshot(now)):
-		offline_notice = "Absence estimée : +%d pièces pour %d min (40 %% du rythme encaissé, plafond 2 h)." % [estimate.amount,estimate.seconds/60]
+		offline_notice = "Absence estimée : +%d billets pour %d min (40 %% du rythme encaissé, plafond 2 h)." % [estimate.amount,estimate.seconds/60]
 	else:
 		sim.money -= estimate.amount
 		offline_notice = "Estimation hors ligne non créditée : sauvegarde indisponible."
@@ -90,7 +124,7 @@ func _notification(what: int):
 			suspended = true; save_game(); accumulator = 0
 			if view != null: view.cancel_gestures()
 	elif what == NOTIFICATION_APPLICATION_RESUMED or what == NOTIFICATION_APPLICATION_FOCUS_IN:
-		if sim != null and suspended:
+		if sim != null and suspended and not is_instance_valid(picker):
 			var data := save_store.load_data()
 			if not data.is_empty(): apply_offline(data,int(Time.get_unix_time_from_system()))
 			suspended = false; accumulator = 0; save_game()

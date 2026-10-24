@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-24",
+  "engine": "4.6.3",
+  "core_assertions": 6279,
+  "core_failures": 0,
+  "web_quick_check": "Alice profile and save present after reload; real WebGL scene inspected",
+  "full_browser_check": "pending",
+  "pack_sha256": "b1ab07066b861042c7c8f824b52fc01423b381770fa437ea3b17a21450a48800",
+  "devices_tested": [
+    "Chromium Linux"
+  ],
+  "physical_mobile_tested": false
+}
