@@ -4,10 +4,21 @@
   "core_assertions": 6279,
   "core_failures": 0,
   "web_quick_check": "Alice profile and save present after reload; real WebGL scene inspected",
-  "full_browser_check": "pending",
-  "pack_sha256": "b1ab07066b861042c7c8f824b52fc01423b381770fa437ea3b17a21450a48800",
+  "full_browser_check": "PASS",
+  "pack_sha256": "800ee62387b100c19e0613045417893fc236d1dcc456b3a09b145ab5cb009926",
   "devices_tested": [
     "Chromium Linux"
   ],
-  "physical_mobile_tested": false
+  "physical_mobile_tested": false,
+  "profiles_native_failures": 0,
+  "web_checks": {
+    "settled_sale": true,
+    "alice_balance_after_sale": 210,
+    "alice_balance_restored": 250,
+    "bob_initial_balance": 200,
+    "profiles_survive_reload": true,
+    "touch_shelf_selection": true,
+    "camera_drag_and_mouse_zoom_exercised": true
+  },
+  "errors": []
 }

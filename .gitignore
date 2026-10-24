@@ -20,3 +20,7 @@ web/*.import
 
 # QA and design imports are regenerated locally.
 docs/**/*.import
+
+# Python verification caches.
+__pycache__/
+*.pyc

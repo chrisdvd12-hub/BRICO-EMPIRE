@@ -1,6 +1,6 @@
 # Cartoon, chargement C et profils — 24 octobre 2026
 
-Godot 4.6.3 stable, scène 3D existante conservée. Sources sur la branche cartoon-v2, destinées à main après validation.
+Godot 4.6.3 stable, scène 3D existante conservée. Sources sur la branche cartoon-v2 ; déploiement de production depuis main.
 
 ## Changements
 
@@ -38,5 +38,7 @@ Le runtime officiel 4.6.3 déjà versionné est conservé ; le pack de ressource
 ## Validation
 
 6 279 assertions économiques sans échec. Tests de profils : migration, argent distinct, reset isolé, chemins invalides, rechargement, index corrompu et limite de six profils. Chromium système exécute le véritable jeu WebAssembly ; captures dans docs/cartoon/. Les résultats finaux du navigateur et le hash du pack sont stockés dans ce dossier.
+
+Test complet Chromium : une vente encaissée (200 → 210 billets), Alice récupérée à 250 billets après les ventes suivantes et le rechargement, Bob à 200 billets, deux profils conservés, sélection tactile du rayon, glissement tactile et zoom à la souris ; aucune erreur JavaScript détectée. Captures de la reprise, des deux profils et du panneau de rayon inspectées. Le pincement à deux doigts et le clavier virtuel sur un iPad physique restent à vérifier.
 
 Safari/iPad et Android réels restent à valider : clavier virtuel, taille des textes, fluidité et cycle de vie. Le rendu du jeu reste une scène 3D procédurale, plus simple que l’illustration détaillée du chargement.

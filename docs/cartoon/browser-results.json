@@ -1,0 +1,20 @@
+{
+  "browser": "154.0.8037.57",
+  "viewport": [
+    540,
+    960
+  ],
+  "errors": [],
+  "console_errors": [],
+  "checks": {
+    "settled_sale": true,
+    "alice_balance_after_sale": 210,
+    "alice_balance_restored": 250,
+    "bob_initial_balance": 200,
+    "profiles_survive_reload": true,
+    "touch_shelf_selection": true,
+    "camera_drag_and_mouse_zoom_exercised": true
+  },
+  "engine": "Godot 4.6.3",
+  "note": "Chromium software rendering; no physical Safari/iPad or mobile FPS measurement."
+}

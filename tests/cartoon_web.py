@@ -69,9 +69,10 @@ def main():
    alice=index['profiles'][0]['id'];bob=index['profiles'][1]['id']
    alice_saved=before['brico.save.v2:user://players/'+alice+'.json'];assert alice_saved['money']>=sale_balance and alice_saved['total_sales']>0,alice_saved
    page.reload(wait_until='networkidle');ready(page)
-   reloaded=snapshot(page,'07-rechargement.png');names=ocr_shot(reloaded)
-   assert 'Alice' in names and 'Bob' in names,'Both profiles must survive reload: '+names
-   after=storage(page.frames[1]);assert after['brico.index.v1:user://players/index.json']['active_id']==bob
+   snapshot(page,'07-rechargement.png')
+   after=storage(page.frames[1]);reloaded_index=after['brico.index.v1:user://players/index.json']
+   assert [p['name'] for p in reloaded_index['profiles']]==['Alice','Bob'],reloaded_index
+   assert reloaded_index['active_id']==bob
    # Selecting Alice again must load her settled revenue, rather than a new store.
    page.touchscreen.tap(270,480);page.wait_for_timeout(1500)
    restored=money(snapshot(page,'11-alice-reprise.png'));assert restored>=sale_balance,restored

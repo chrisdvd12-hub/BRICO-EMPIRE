@@ -14,7 +14,7 @@ Au démarrage : **Qui joue ?** Créez ou sélectionnez un des six profils locaux
 
 **[Ouvrir Brico Empire](https://brico-empire.vercel.app)**
 
-La livraison cartoon et profils remplace la présentation précédente lors du déploiement vérifié. Les liens de prévisualisation anciens sont des versions figées : privilégier ce lien public. Safari 16.4+ avec WebGL 2 est requis ; cette version est vérifiée sous Chromium, pas encore sur un iPad réel.
+Version cartoon et profils locaux, avec scène 3D jouable. Les liens de prévisualisation anciens sont des versions figées : privilégier ce lien public. Safari 16.4+ avec WebGL 2 est requis ; cette version est vérifiée sous Chromium, pas encore sur un iPad réel.
 
 Les parties sont locales au navigateur et au domaine. Utiliser **Paramètres → Copier ma sauvegarde** avant de changer de domaine ou d’effacer les données du site, puis importer le code dans le profil voulu.
 

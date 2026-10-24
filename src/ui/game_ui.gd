@@ -79,10 +79,10 @@ func setup(simulation: BricoSimulation, store_view, developer: bool):
 	var cash_row := HBoxContainer.new(); cash_row.add_theme_constant_override("separation",8); wallet.add_child(cash_row)
 	var cash_icon := TextureRect.new(); cash_icon.texture = preload("res://assets/ui/banknote.svg"); cash_icon.custom_minimum_size = Vector2(40,38); cash_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE; cash_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED; cash_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE; cash_row.add_child(cash_icon)
 	money_label = label("",29); money_label.autowrap_mode = TextServer.AUTOWRAP_OFF; money_label.clip_text = true; money_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; money_label.custom_minimum_size.x = 100; money_label.add_theme_font_override("font",bold); cash_row.add_child(money_label)
-	var stats_button := icon_button("stats","Statistiques",func(): open_sheet("stats","")); stats_button.custom_minimum_size = Vector2(56,56); money_row.add_child(stats_button)
-	var center := icon_button("center","Recentrer",view.recenter); center.custom_minimum_size = Vector2(56,56); money_row.add_child(center)
+	var stats_button := icon_button("stats","Statistiques",func(): open_sheet("stats","")); stats_button.custom_minimum_size = Vector2(64,64); money_row.add_child(stats_button)
+	var center := icon_button("center","Recentrer",view.recenter); center.custom_minimum_size = Vector2(64,64); money_row.add_child(center)
 	var settings := icon_button("settings","Paramètres",func(): open_sheet("settings",""))
-	settings.custom_minimum_size = Vector2(56,56)
+	settings.custom_minimum_size = Vector2(64,64)
 	settings.add_theme_constant_override("icon_max_width",28)
 	nav_buttons["settings"] = settings
 	money_row.add_child(settings)
