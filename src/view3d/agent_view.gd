@@ -67,7 +67,7 @@ func setup(a: RefCounted, is_employee: bool, m: BricoModels3D):
 	if employee: models.carton(cargo,Vector3.ZERO,Vector3(.29,.23,.25))
 	else: cargo.position.y = .355; basket()
 	caption = models.label(self,Vector3(0,1.14,0),"",24,models.TEAL); caption.visible = false
-	if employee: models.pick(self,Vector3(0,.48,0),Vector3(.43,1.0,.43),"workers",str(a.id))
+	if employee: models.pick(self,Vector3(0,.48,0),Vector3(.43,1.0,.43),"checkout" if a.id >= 3 else "workers",str(a.id-3 if a.id >= 3 else a.id))
 func uniform():
 	var m := models
 	m.block(body,Vector3(0,.395,.115),Vector3(.205,.222,.025),m.ORANGE,.027)
@@ -119,12 +119,15 @@ func animate(dt: float, reduced: bool, debug := false):
 	var carrying: bool = agent.cargo > 0 if employee else agent.carrying
 	var working: bool = agent.state in [BricoWorker.State.RESTOCKING,BricoWorker.State.LOADING] if employee else agent.state == BricoCustomer.State.PICKING
 	var paying: bool = not employee and agent.state == BricoCustomer.State.PAYING
-	if working: rotation.y = lerp_angle(rotation.y,PI/2 if employee else PI,minf(1,dt*14))
+	if working:
+		var facing := PI if not employee or agent.state == BricoWorker.State.LOADING else PI/2
+		rotation.y = lerp_angle(rotation.y,facing,minf(1,dt*14))
 	for i in range(2):
 		legs[i].rotation.x = stride*(1 if i == 0 else -1)
 		var shoulder := -.65 if carrying else -stride*(1 if i == 0 else -1)*.65
 		var elbow := -.78 if carrying else -.10
 		if working: shoulder = -.78+sin(phase*6)*.10; elbow = -.66-sin(phase*6)*.10
+		if employee and agent.id >= 3 and working: shoulder = -1.15+sin(phase*6)*.10; elbow = -.85
 		if paying and i == 1: shoulder = -.92+sin(phase*6)*.12; elbow = -.46
 		arms[i].rotation.x = lerpf(arms[i].rotation.x,shoulder,minf(1,dt*16)); elbows[i].rotation.x = lerpf(elbows[i].rotation.x,elbow,minf(1,dt*16)); arms[i].rotation.z = 0
 	body.position.y = (absf(sin(phase*9.5+agent.id))*.019 if moving else sin(phase*2.2+agent.id)*.004) if not reduced else 0

@@ -44,6 +44,9 @@ var confirm_import := false
 var header_panel: PanelContainer
 var bottom_panel: PanelContainer
 var nav_buttons := {}
+var hud_controls: Array[Control] = []
+var advice_panel: PanelContainer
+var sheet_tween: Tween
 func setup(simulation: BricoSimulation, store_view, developer: bool):
 	sim = simulation
 	view = store_view
@@ -67,62 +70,48 @@ func setup(simulation: BricoSimulation, store_view, developer: bool):
 		theme.set_stylebox(state,"Button",style)
 	root.theme = theme
 	bold = FontVariation.new(); bold.base_font = preload("res://assets/fonts/Fredoka-Semibold.ttf")
-	var header := panel_at(Vector2(12,12),Vector2(516,150),PAPER)
-	header_panel = header
-	var top := VBoxContainer.new(); top.add_theme_constant_override("separation",2); header.add_child(top)
-	title_label = label("BRICO EMPIRE     /     ATELIER 01",14); top.add_child(title_label)
-	var money_row := HBoxContainer.new(); top.add_child(money_row)
-	money_row.add_theme_constant_override("separation",8)
-	var wallet := PanelContainer.new(); wallet.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var wallet_style := StyleBoxFlat.new(); wallet_style.bg_color = Color("e6ffd1"); wallet_style.border_color = Color("00a956"); wallet_style.set_border_width_all(2); wallet_style.set_corner_radius_all(16); wallet_style.content_margin_left = 10; wallet_style.content_margin_right = 8
-	wallet.add_theme_stylebox_override("panel",wallet_style); money_row.add_child(wallet)
-	var cash_row := HBoxContainer.new(); cash_row.add_theme_constant_override("separation",8); wallet.add_child(cash_row)
-	var cash_icon := TextureRect.new(); cash_icon.texture = preload("res://assets/ui/banknote.svg"); cash_icon.custom_minimum_size = Vector2(40,38); cash_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE; cash_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED; cash_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE; cash_row.add_child(cash_icon)
-	money_label = label("",29); money_label.autowrap_mode = TextServer.AUTOWRAP_OFF; money_label.clip_text = true; money_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; money_label.custom_minimum_size.x = 100; money_label.add_theme_font_override("font",bold); cash_row.add_child(money_label)
-	var stats_button := icon_button("stats","Statistiques",func(): open_sheet("stats","")); stats_button.custom_minimum_size = Vector2(64,64); money_row.add_child(stats_button)
-	var center := icon_button("center","Recentrer",view.recenter); center.custom_minimum_size = Vector2(64,64); money_row.add_child(center)
-	var settings := icon_button("settings","Paramètres",func(): open_sheet("settings",""))
-	settings.custom_minimum_size = Vector2(64,64)
-	settings.add_theme_constant_override("icon_max_width",28)
-	nav_buttons["settings"] = settings
-	money_row.add_child(settings)
-	objective = label("",20); top.add_child(objective)
-	status = label("",16); top.add_child(status)
-	# Header lines never wrap: a long objective must not push the status out of the panel.
-	for l in [title_label,objective,status]:
-		l.autowrap_mode = TextServer.AUTOWRAP_OFF; l.clip_text = true; l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	var bottom := panel_at(Vector2(12,818),Vector2(516,130),PAPER)
-	bottom_panel = bottom
-	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	bottom.offset_left = 12; bottom.offset_right = -12; bottom.offset_top = -142; bottom.offset_bottom = -12
-	var bottom_box := VBoxContainer.new(); bottom_box.add_theme_constant_override("separation",6); bottom.add_child(bottom_box)
-	advice = label("",18); advice.max_lines_visible = 1; advice.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS; bottom_box.add_child(advice)
-	goal_bar = ProgressBar.new(); goal_bar.custom_minimum_size.y = 5; goal_bar.show_percentage = false; goal_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var track := StyleBoxFlat.new(); track.bg_color = Color("d8e4d6"); track.set_corner_radius_all(3)
-	var fill := StyleBoxFlat.new(); fill.bg_color = Color("438e80"); fill.set_corner_radius_all(3)
-	goal_bar.add_theme_stylebox_override("background",track); goal_bar.add_theme_stylebox_override("fill",fill)
-	bottom_box.add_child(goal_bar)
-	var menu := HBoxContainer.new(); menu.add_theme_constant_override("separation",8); bottom_box.add_child(menu)
+	# Compact floating controls leave the living store visible.
+	var wallet := panel_at(Vector2(16,18),Vector2(270,66),Color("096243")); header_panel = wallet; hud_controls.append(wallet)
+	var ws := wallet.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	ws.border_color = Color("b9f268"); ws.set_border_width_all(3); ws.border_width_bottom = 5; ws.set_corner_radius_all(20); ws.content_margin_top = 4; ws.content_margin_bottom = 4; wallet.add_theme_stylebox_override("panel",ws)
+	var cash_row := HBoxContainer.new(); cash_row.add_theme_constant_override("separation",10); wallet.add_child(cash_row)
+	var cash_icon := TextureRect.new(); cash_icon.texture = preload("res://assets/ui/banknote.svg"); cash_icon.custom_minimum_size = Vector2(44,42); cash_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE; cash_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED; cash_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE; cash_row.add_child(cash_icon)
+	money_label = label("",34); money_label.autowrap_mode = TextServer.AUTOWRAP_OFF; money_label.clip_text = true; money_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; money_label.custom_minimum_size.x = 150; money_label.add_theme_font_override("font",bold); money_label.add_theme_color_override("font_color",Color.WHITE); cash_row.add_child(money_label)
+	for item in [["stats","Statistiques"],["center","Recentrer"],["settings","Paramètres"]]:
+		var id: String = item[0]
+		var callback: Callable = view.recenter if id == "center" else func(): open_sheet("stats" if id == "stats" else "settings","")
+		var b := icon_button(id,item[1],callback); b.position = Vector2(304+nav_buttons.size()*72,18); b.size = Vector2(64,64); b.add_theme_constant_override("icon_max_width",28 if id == "settings" else 32)
+		root.add_child(b); nav_buttons[id] = b; hud_controls.append(b)
+	var mission := panel_at(Vector2(16,96),Vector2(388,52),PAPER); hud_controls.append(mission)
+	var ms := mission.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	ms.set_border_width_all(2); ms.border_color = Color("007c9c"); ms.set_corner_radius_all(18); ms.content_margin_top = 6; ms.content_margin_bottom = 6; mission.add_theme_stylebox_override("panel",ms)
+	var mission_box := VBoxContainer.new(); mission_box.add_theme_constant_override("separation",2); mission.add_child(mission_box)
+	objective = label("",21); objective.autowrap_mode = TextServer.AUTOWRAP_OFF; objective.clip_text = true; objective.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS; objective.add_theme_font_override("font",bold); mission_box.add_child(objective)
+	goal_bar = ProgressBar.new(); goal_bar.custom_minimum_size.y = 4; goal_bar.show_percentage = false; goal_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var track := StyleBoxFlat.new(); track.bg_color = Color("d9e9df"); track.set_corner_radius_all(2)
+	var fill := StyleBoxFlat.new(); fill.bg_color = Color("ff981b"); fill.set_corner_radius_all(2)
+	goal_bar.add_theme_stylebox_override("background",track); goal_bar.add_theme_stylebox_override("fill",fill); mission_box.add_child(goal_bar)
+	title_label = label("",18); title_label.hide(); root.add_child(title_label)
+	status = label("",18); status.hide(); root.add_child(status)
+	var bottom := panel_at(Vector2(16,864),Vector2(508,80),Color.TRANSPARENT); bottom_panel = bottom; hud_controls.append(bottom)
+	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE); bottom.offset_left = 16; bottom.offset_right = -16; bottom.offset_top = -96; bottom.offset_bottom = -16
+	bottom.add_theme_stylebox_override("panel",StyleBoxEmpty.new())
+	var menu := HBoxContainer.new(); menu.add_theme_constant_override("separation",12); bottom.add_child(menu)
 	for item in [["Équipe","workers"],["Construire","build"],["Succès","achievements"]]:
-		var b := icon_button(item[1],item[0],func(): open_sheet(item[1],""))
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		nav_buttons[item[1]] = b
-		if item[1] == "build":
-			build_button = b
-			b.draw.connect(draw_build_badge)
+		var b := icon_button(item[1],item[0],func(): open_sheet(item[1],"")); b.custom_minimum_size.y = 80; b.size_flags_horizontal = Control.SIZE_EXPAND_FILL; nav_buttons[item[1]] = b
+		if item[1] == "build": build_button = b; b.draw.connect(draw_build_badge)
 		menu.add_child(b)
-	tutorial_box = panel_at(Vector2(12,174),Vector2(516,76),Color("d8ffad"))
-	var tuto := HBoxContainer.new(); tutorial_box.add_child(tuto)
-	tutorial_label = label("",18); tutorial_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; tuto.add_child(tutorial_label)
-	var skip := button("Passer",func(): sim.tutorial = 5; save_requested.emit(),"skip"); skip.custom_minimum_size = Vector2(110,48); skip.add_theme_font_size_override("font_size",20); tuto.add_child(skip)
-	toast_label = label("",18)
-	toast_label.position = Vector2(24,258); toast_label.size = Vector2(492,0)
-	toast_label.add_theme_color_override("font_color",PAPER)
-	var toast_style := StyleBoxFlat.new(); toast_style.bg_color = Color(0.06,.2,.24,.88); toast_style.set_corner_radius_all(12)
-	toast_style.content_margin_left = 12; toast_style.content_margin_right = 12; toast_style.content_margin_top = 8; toast_style.content_margin_bottom = 8
-	toast_label.add_theme_stylebox_override("normal",toast_style)
-	toast_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(toast_label)
+	advice_panel = panel_at(Vector2(16,816),Vector2(508,36),PAPER); hud_controls.append(advice_panel)
+	advice_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE); advice_panel.offset_left = 16; advice_panel.offset_right = -16; advice_panel.offset_top = -146; advice_panel.offset_bottom = -108
+	var ast := advice_panel.get_theme_stylebox("panel").duplicate() as StyleBoxFlat; ast.content_margin_top = 5; ast.content_margin_bottom = 5; ast.set_corner_radius_all(14); advice_panel.add_theme_stylebox_override("panel",ast)
+	advice = label("",18); advice.max_lines_visible = 1; advice.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS; advice_panel.add_child(advice); advice_panel.hide()
+	tutorial_box = panel_at(Vector2(16,160),Vector2(508,74),Color("f5ffdb")); hud_controls.append(tutorial_box)
+	var ts := tutorial_box.get_theme_stylebox("panel").duplicate() as StyleBoxFlat; ts.border_color = Color("b6d78a"); ts.set_border_width_all(2); ts.content_margin_top = 4; ts.content_margin_bottom = 4; tutorial_box.add_theme_stylebox_override("panel",ts)
+	var tuto := HBoxContainer.new(); tuto.add_theme_constant_override("separation",8); tutorial_box.add_child(tuto)
+	tutorial_label = label("",19); tutorial_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL; tuto.add_child(tutorial_label)
+	var skip := button("Passer",func(): sim.tutorial = 5; save_requested.emit(),"skip"); skip.custom_minimum_size = Vector2(108,64); skip.add_theme_font_size_override("font_size",20); tuto.add_child(skip)
+	toast_label = label("",18); toast_label.position = Vector2(20,242); toast_label.size = Vector2(500,0); toast_label.max_lines_visible = 3; toast_label.add_theme_color_override("font_color",PAPER)
+	var toast_style := StyleBoxFlat.new(); toast_style.bg_color = Color(.06,.2,.24,.9); toast_style.set_corner_radius_all(16); toast_style.content_margin_left = 12; toast_style.content_margin_right = 12; toast_style.content_margin_top = 8; toast_style.content_margin_bottom = 8; toast_label.add_theme_stylebox_override("normal",toast_style); toast_label.mouse_filter = Control.MOUSE_FILTER_IGNORE; root.add_child(toast_label)
 	view.ui_blocks_point = blocks_store_point
 	view.selected.connect(open_sheet)
 	sim.achieved.connect(func(a):
@@ -148,7 +137,7 @@ func draw_build_badge():
 	if build_ready: build_button.draw_circle(Vector2(build_button.size.x-14,14),5,Color("a9d6c4"))
 func blocks_store_point(at: Vector2) -> bool:
 	if is_instance_valid(sheet): return true
-	for panel in [header_panel,bottom_panel,tutorial_box]:
+	for panel in hud_controls:
 		if is_instance_valid(panel) and panel.visible and panel.get_global_rect().has_point(at): return true
 	return false
 func icon_button(id: String, title: String, callback: Callable) -> Button:
@@ -225,6 +214,7 @@ func show_tip(id: String, text: String):
 	show_toast("Astuce · " + text)
 	save_requested.emit()
 func close_sheet():
+	if sheet_tween != null: sheet_tween.kill(); sheet_tween = null
 	if is_instance_valid(sheet): sheet.queue_free()
 	sheet = null; rows.clear(); live_labels.clear(); selection = ""; confirm_reset = false; confirm_franchise = false; confirm_import = false
 	view.cancel_gestures()
@@ -244,11 +234,17 @@ func open_sheet(kind: String, id: String):
 	var body := PanelContainer.new()
 	body.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	body.offset_top = -570; body.offset_bottom = -12; body.offset_left = 12; body.offset_right = -12
-	var style := StyleBoxFlat.new(); style.bg_color = PAPER; style.set_corner_radius_all(22)
+	var style := StyleBoxFlat.new(); style.bg_color = PAPER; style.set_corner_radius_all(28); style.set_border_width_all(3); style.border_color = Color("73cbd5")
 	style.content_margin_left = 18; style.content_margin_right = 18; style.content_margin_top = 14; style.content_margin_bottom = 14
 	body.add_theme_stylebox_override("panel",style)
 	# A plain Control ensures the bottom sheet can anchor independently of PanelContainer layout.
 	var overlay := Control.new(); overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE; sheet.add_child(overlay); overlay.add_child(body)
+	if not sim.settings.reduced_effects:
+		body.offset_top += 32; body.offset_bottom += 32; body.modulate.a = 0
+		sheet_tween = create_tween().set_parallel(true)
+		sheet_tween.tween_property(body,"offset_top",-570.0,.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		sheet_tween.tween_property(body,"offset_bottom",-12.0,.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		sheet_tween.tween_property(body,"modulate:a",1.0,.12)
 	var column := VBoxContainer.new(); column.add_theme_constant_override("separation",12); body.add_child(column)
 	var heading := HBoxContainer.new(); column.add_child(heading)
 	var titles := {"shelf":sim.cfg.family(id).get("name","Rayon"),"workers":"Équipe de réassort","checkout":"Caisse %d" % (int(id)+1),"reserve":"Réserve & livraisons","expand":"Agrandir le magasin","build":"Construire & grandir","achievements":"Succès","settings":"Réglages","stats":"Statistiques"}
@@ -384,6 +380,9 @@ func open_sheet(kind: String, id: String):
 			content.add_child(reset_button)
 			if dev: developer_controls()
 		"stats":
+			live(func(): return title_label.text)
+			live(func(): return status.text)
+			live(func(): return sim.advice)
 			stats_sheet()
 	refresh()
 func progress_bar(color: Color) -> ProgressBar:
@@ -494,6 +493,7 @@ func refresh():
 		goal_bar.max_value = goal.cost; goal_bar.value = mini(sim.money,goal.cost)
 		goal_bar.tooltip_text = "%d / %d billets pour le prochain palier" % [mini(sim.money,goal.cost),goal.cost]
 	advice.text = sim.advice
+	advice_panel.visible = sim.tutorial >= 5 and sim.total_sales >= 3 and not sim.advice.begins_with("L’activité est fluide") and not sim.advice.begins_with("Les clients font")
 	# Calm moments show the daily objective instead of generic advice.
 	if sim.advice.begins_with("L’activité est fluide") and not sim.daily.is_empty() and not sim.daily.done:
 		advice.text = "Objectif du jour : %s · %d/%d · +%d billets" % [sim.daily_text(),sim.daily.progress,sim.daily.goal,sim.daily.reward]
@@ -504,7 +504,7 @@ func refresh():
 	if sim.franchise_ready():
 		show_tip("franchise","Franchise disponible dans « Construire » : nouvel atelier avec un bonus de vente permanent.")
 	tutorial_box.visible = sim.tutorial < 5
-	toast_label.position.y = 258 if tutorial_box.visible else 174
+	toast_label.position.y = 242 if tutorial_box.visible else 160
 	var steps := ["1/5 · Observez un client prendre un produit, puis payer.","2/5 · Touchez le rayon outillage et ses améliorations.","3/5 · Améliorez le rayon dès 100 billets.","4/5 · Suivez le carton de la réserve au rayon.","5/5 · Objectif peinture : 300 billets. Touchez ici pour finir."]
 	if sim.tutorial < 5: tutorial_label.text = steps[sim.tutorial]
 	for row in rows:

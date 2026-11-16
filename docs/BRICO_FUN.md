@@ -8,6 +8,6 @@ Le workspace a été recréé. La base publiée est le commit 70c4c2b. La branch
 
 Modèles restaurés : arrondis à normales analytiques, perceuses détaillées, mallettes, marteaux, pots à anses, sacs de terreau, plantes et cartons ; personnages à tête expressive, coudes articulés, tabliers et paniers ouverts. Géométrie et matériaux partagés, ombres portées désactivées.
 
-À terminer : réintégration de la scène, de la façade et du HUD compact ; contrôle dans le vrai WebAssembly ; tests de vente, stock, interactions et profils ; export puis publication GitHub/main et Vercel vérifiée par hash. Les sauvegardes et l’économie de la version publiée sont conservées.
+Scène, façade, signalétique et HUD compact réintégrés. Les tests natifs de visibilité des stocks, agrandissements, sélection 3D et limites de caméra passent sans échec. Contrôle dans le vrai WebAssembly en cours ; reste à confirmer les flux de vente/profils et les captures puis publier ensemble sources et export testé. Les sauvegardes et l’économie de la version publiée sont conservées.
 
 Moteur : Godot 4.6.3 stable. Ne pas confondre une planche générée de direction artistique et une capture du jeu. Le résultat réellement exécuté sera fourni dans docs/brico-fun/ après validation.

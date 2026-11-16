@@ -7,14 +7,14 @@ from pathlib import Path
 from PIL import Image
 import io,json,os,re,subprocess,time
 ROOT=Path(__file__).resolve().parent.parent
-OUT=ROOT/'docs/cartoon'
+OUT=ROOT/'docs/brico-fun'
 def ocr_shot(path,crop=None):
  im=Image.open(path)
  if crop: im=im.crop(crop)
  im=im.resize((im.width*2,im.height*2));buf=io.BytesIO();im.save(buf,format='PNG')
  return subprocess.check_output(['tesseract','stdin','stdout','--psm','6'],input=buf.getvalue(),stderr=subprocess.DEVNULL).decode()
 def money(path):
- text=ocr_shot(path,(80,50,272,102));m=re.search(r'[0-9][0-9 ]*',text)
+ text=ocr_shot(path,(80,18,278,80));m=re.search(r'[0-9][0-9 ]*',text)
  assert m,text
  return int(m[0].replace(' ',''))
 def snapshot(page,name):
@@ -53,14 +53,14 @@ def main():
    # Mouse wheel and a real touch drag; inspect the resulting portraits.
    page.mouse.move(270,430);page.mouse.wheel(0,-300);page.wait_for_timeout(800);snapshot(page,'08-zoom.png')
    cdp=context.new_cdp_session(page);touch_drag(cdp,(250,420),(330,470));page.wait_for_timeout(800);snapshot(page,'09-deplacement.png')
-   page.touchscreen.tap(420,78);page.wait_for_timeout(800)
+   page.touchscreen.tap(408,50);page.wait_for_timeout(800)
    # A tap on the tooling shelf must open its actual interactive panel.
-   page.touchscreen.tap(245,407);page.wait_for_timeout(700)
+   page.touchscreen.tap(260,365);page.wait_for_timeout(700)
    selected=snapshot(page,'10-rayon.png');selected_text=ocr_shot(selected)
    assert 'En rayon' in selected_text and 'Capacité' in selected_text and 'Acheter' in selected_text,selected_text
    # Close sheet before switching player, so no scene gesture crosses the panel.
    page.touchscreen.tap(484,431);page.wait_for_timeout(500)
-   page.touchscreen.tap(476,78);page.wait_for_timeout(800);snapshot(page,'04-parametres.png')
+   page.touchscreen.tap(480,50);page.wait_for_timeout(800);snapshot(page,'04-parametres.png')
    page.touchscreen.tap(270,566);page.wait_for_timeout(800);snapshot(page,'05-changer.png');print('SWITCH',errors,logs,flush=True)
    page.touchscreen.tap(270,758);page.keyboard.type('Bob');page.keyboard.press('Enter');page.wait_for_timeout(1500)
    assert money(snapshot(page,'06-bob.png'))==200,'Bob must start independently'
